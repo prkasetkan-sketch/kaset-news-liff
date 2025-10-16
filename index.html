@@ -6,6 +6,8 @@
     <title>สร้างข่าวประชาสัมพันธ์</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <!-- ✅ 1. เพิ่ม Library ของ Supabase เข้ามา -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'IBM Plex Sans Thai', sans-serif; }
         .loader { border-top-color: #3498db; animation: spin 1s linear infinite; }
@@ -60,11 +62,8 @@
             </div>
             <div>
                 <label for="images" class="block text-sm font-medium text-gray-700 mb-1">รูปภาพประกอบ <span class="text-red-500">*</span></label>
-                <input type="file" id="images" name="images" accept="image/jpeg, image/png" required multiple class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
-                
-                <p id="size-warning" class="text-sm text-red-500 mt-2 font-semibold"></p>
-
-                <div id="image-preview-container" class="mt-4 grid grid-cols-3 gap-4"></div>
+                <input type="file" id="images" accept="image/jpeg, image/png" required multiple class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
+                <div id="image-preview-container" class="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4"></div>
             </div>
             <button type="submit" id="submit-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:cursor-not-allowed">
                 <span id="submit-text">ส่งข้อมูล</span>
@@ -80,15 +79,24 @@
     </div>
 
     <script>
+        // --- ✅ 2. เพิ่มการตั้งค่าสำหรับ Supabase ---
+        // 🛑🛑🛑 ไปที่ Supabase > Project Settings > API แล้วคัดลอกค่ามาใส่ 🛑🛑🛑
+        const SUPABASE_URL = 'https://ngreqaszduphwftwswdj.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ncmVxYXN6ZHVwaHdmdHdzd2RqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxMTcyNTMsImV4cCI6MjA3NTY5MzI1M30.balzxiWXum4lnl6dCrNzSoF02tRfmG19rEqMnHSynwk';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // --- การตั้งค่าอื่นๆ ---
         const KANCHANABURI_DISTRICTS = ["เมืองกาญจนบุรี", "ไทรโยค", "บ่อพลอย", "ศรีสวัสดิ์", "ท่ามะกา", "ท่าม่วง", "ทองผาภูมิ", "สังขละบุรี", "พนมทวน", "เลาขวัญ", "ด่านมะขามเตี้ย", "หนองปรือ", "ห้วยกระเจา"];
         const PROVINCIAL_GROUPS = ["กลุ่มยุทธศาสตร์และสารสนเทศ", "กลุ่มส่งเสริมและพัฒนาการผลิต", "กลุ่มส่งเสริมและพัฒนาเกษตรกร", "กลุ่มอารักขาพืช", "ฝ่ายบริหารทั่วไป"];
         
         // 🛑🛑🛑 แก้ไข URL และ LIFF ID ของคุณตรงนี้ 🛑🛑🛑
         const MAKE_WEBHOOK_URL = 'https://hook.eu2.make.com/1rem0w234uqbka4sp1adg5ww83y63mo6'; 
         const LIFF_ID = '2008300845-zJqG4ZEZ';
+        
+        let selectedFiles = [];
 
         async function main() {
-            try {
+             try {
                 await liff.init({ liffId: LIFF_ID });
                 if (!liff.isLoggedIn()) {
                     liff.login();
@@ -99,7 +107,7 @@
                 
                 const populateSelect = (elementId, options) => {
                     const select = document.getElementById(elementId);
-                    select.innerHTML = '';
+                    select.innerHTML = '<option value="">-- กรุณาเลือก --</option>'; // Add a default empty option
                     options.forEach(opt => {
                         const option = document.createElement('option');
                         option.value = opt;
@@ -118,7 +126,6 @@
                 alert('เกิดข้อผิดพลาดในการโหลด LIFF App: ' + err.message);
             }
         }
-
         main();
 
         const form = document.getElementById('newsForm');
@@ -127,110 +134,120 @@
         const submitSpinner = document.getElementById('submit-spinner');
         const imageInput = document.getElementById('images');
         const imagePreviewContainer = document.getElementById('image-preview-container');
-        const sizeWarning = document.getElementById('size-warning'); // ✅ 2. อ้างอิงถึง element แจ้งเตือน
 
         const sourceTypeSelect = document.getElementById('source_type');
         const districtContainer = document.getElementById('district_container');
         const groupContainer = document.getElementById('group_container');
         const districtSelect = document.getElementById('district');
         const groupSelect = document.getElementById('group_name');
-        
-        // ✅ 3. กำหนดขนาดไฟล์สูงสุด (4.5 MB)
-        const MAX_TOTAL_SIZE_BYTES = 4.5 * 1024 * 1024; 
 
         sourceTypeSelect.addEventListener('change', (e) => {
             const value = e.target.value;
             if (value === 'district') {
                 districtContainer.classList.remove('hidden');
                 districtSelect.required = true;
-                districtSelect.disabled = false;
                 groupContainer.classList.add('hidden');
                 groupSelect.required = false;
-                groupSelect.disabled = true;
             } else if (value === 'province') {
                 groupContainer.classList.remove('hidden');
                 groupSelect.required = true;
-                groupSelect.disabled = false;
                 districtContainer.classList.add('hidden');
                 districtSelect.required = false;
-                districtSelect.disabled = true;
             } else {
                 districtContainer.classList.add('hidden');
                 groupContainer.classList.add('hidden');
+                districtSelect.required = false;
+                groupSelect.required = false;
             }
         });
-
-        // ✅ 4. เขียน Logic การตรวจสอบขนาดไฟล์ใหม่ทั้งหมด
-        imageInput.addEventListener('change', (event) => {
-            imagePreviewContainer.innerHTML = ''; 
-            sizeWarning.textContent = '';
-            submitButton.disabled = false; // Reset ปุ่มทุกครั้งที่เลือกใหม่
-
-            const files = event.target.files;
-            if (!files || files.length === 0) {
-                return;
-            }
-
-            let totalSize = 0;
-            for (const file of files) {
-                totalSize += file.size;
-
-                // แสดงรูปตัวอย่าง
+        
+        function renderPreviews() {
+            imagePreviewContainer.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
+                    const previewWrapper = document.createElement('div');
+                    previewWrapper.className = 'relative group';
+
                     const img = document.createElement('img');
                     img.src = e.target.result;
                     img.className = 'rounded-lg object-cover h-24 w-full';
-                    imagePreviewContainer.appendChild(img);
+                    
+                    const deleteButton = document.createElement('button');
+                    deleteButton.innerHTML = '&times;';
+                    deleteButton.className = 'absolute top-0 right-0 -mt-2 -mr-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center font-bold text-xl leading-none opacity-0 group-hover:opacity-100 transition-opacity';
+                    deleteButton.onclick = (event) => {
+                        event.preventDefault();
+                        selectedFiles.splice(index, 1);
+                        renderPreviews();
+                    };
+
+                    previewWrapper.appendChild(img);
+                    previewWrapper.appendChild(deleteButton);
+                    imagePreviewContainer.appendChild(previewWrapper);
                 };
                 reader.readAsDataURL(file);
-            }
+            });
+            imageInput.required = selectedFiles.length === 0;
+        }
 
-            const totalSizeMB = (totalSize / 1024 / 1024).toFixed(2);
-            
-            if (totalSize > MAX_TOTAL_SIZE_BYTES) {
-                submitButton.disabled = true; // ปิดปุ่ม
-                const excessSizeMB = ((totalSize - MAX_TOTAL_SIZE_BYTES) / 1024 / 1024).toFixed(2);
-                const avgSizeMB = totalSizeMB / files.length;
-                const imagesToRemove = Math.ceil(excessSizeMB / avgSizeMB);
-                
-                sizeWarning.textContent = `🔴 ขนาดไฟล์รวม ${totalSizeMB} MB เกินกำหนดไป ${excessSizeMB} MB! กรุณาลบออกประมาณ ${imagesToRemove} รูป`;
-                sizeWarning.classList.remove('text-green-500');
-                sizeWarning.classList.add('text-red-500');
-
-            } else {
-                sizeWarning.textContent = `🟢 ขนาดไฟล์รวม ${totalSizeMB} MB พร้อมส่ง`;
-                sizeWarning.classList.remove('text-red-500');
-                sizeWarning.classList.add('text-green-500');
-            }
+        imageInput.addEventListener('change', (event) => {
+            selectedFiles = [...selectedFiles, ...Array.from(event.target.files)];
+            renderPreviews();
+            imageInput.value = ''; // Clear the input so the user can select the same file again if they delete it
         });
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            if (MAKE_WEBHOOK_URL === 'YOUR_MAKE_WEBHOOK_URL_HERE' || LIFF_ID === 'YOUR_LIFF_ID_HERE') {
-                alert('กรุณาตั้งค่า Webhook URL และ LIFF ID ในไฟล์ index.html ก่อนครับ');
+            if (SUPABASE_URL === 'YOUR_SUPABASE_URL' || MAKE_WEBHOOK_URL === 'YOUR_MAKE_WEBHOOK_URL_HERE' || LIFF_ID === 'YOUR_LIFF_ID_HERE') {
+                alert('กรุณาตั้งค่า Supabase, Webhook, และ LIFF ID ในไฟล์ index.html ก่อนครับ');
+                return;
+            }
+            if(selectedFiles.length === 0){
+                alert('กรุณาเลือกรูปภาพอย่างน้อย 1 รูปครับ');
                 return;
             }
 
             submitButton.disabled = true;
-            submitText.classList.add('hidden');
+            submitText.textContent = 'กำลังอัปโหลดรูปภาพ... (0%)';
             submitSpinner.classList.remove('hidden');
 
-            const formData = new FormData(form);
-            const profile = await liff.getProfile();
-            formData.append('userId', profile.userId);
-            
-            if (sourceTypeSelect.value === 'district') {
-                formData.delete('group_name');
-            } else if (sourceTypeSelect.value === 'province') {
-                formData.delete('district');
-            }
-            
+            const uploadPromises = selectedFiles.map(async (file, index) => {
+                const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+                const { error } = await supabaseClient.storage
+                    .from('news-images')
+                    .upload(fileName, file);
+                
+                if (error) throw new Error(`ไม่สามารถอัปโหลดไฟล์: ${file.name}`);
+                
+                const percent = Math.round(((index + 1) / selectedFiles.length) * 100);
+                submitText.textContent = `กำลังอัปโหลดรูปภาพ... (${percent}%)`;
+
+                const { data } = supabaseClient.storage.from('news-images').getPublicUrl(fileName);
+                return data.publicUrl;
+            });
+
             try {
+                const imageUrls = await Promise.all(uploadPromises);
+                submitText.textContent = 'กำลังส่งข้อมูลไปประมวลผล...';
+
+                const profile = await liff.getProfile();
+                
+                const payload = {
+                    userId: profile.userId,
+                    source_type: sourceTypeSelect.value,
+                    district: sourceTypeSelect.value === 'district' ? districtSelect.value : null,
+                    group_name: sourceTypeSelect.value === 'province' ? groupSelect.value : null,
+                    category: document.getElementById('category').value,
+                    summary: document.getElementById('summary').value,
+                    imageUrls: imageUrls
+                };
+
                 const response = await fetch(MAKE_WEBHOOK_URL, {
                     method: 'POST',
-                    body: formData,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
                 });
 
                 if (response.ok) {
@@ -241,14 +258,15 @@
                     throw new Error(`Server responded with ${response.status}: ${errorText}`);
                 }
             } catch (error) {
-                console.error('Error submitting form:', error);
-                alert('เกิดข้อผิดพลาดในการส่งข้อมูล: ' + error.message);
+                console.error('Error:', error);
+                alert('เกิดข้อผิดพลาด: ' + error.message);
             } finally {
                 submitButton.disabled = false;
-                submitText.classList.remove('hidden');
+                submitText.textContent = 'ส่งข้อมูล';
                 submitSpinner.classList.add('hidden');
             }
         });
     </script>
 </body>
 </html>
+
