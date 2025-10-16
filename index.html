@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สร้างข่าวประชาสัมพันธ์</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        body { font-family: 'IBM Plex Sans Thai', sans-serif; }
+        .loader { border-top-color: #3498db; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <div id="loading-screen" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center">
+        <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-24 w-24 mb-4"></div>
+        <h2 class="text-center text-xl font-semibold">กำลังโหลดข้อมูล...</h2>
+        <p class="text-center text-gray-500">กรุณารอสักครู่</p>
+    </div>
+
+    <div id="app" class="max-w-xl mx-auto p-6 bg-white shadow-md rounded-lg mt-10 hidden">
+        <h1 class="text-2xl font-bold mb-2 text-gray-800">สร้างโพสต์ข่าวอัตโนมัติ</h1>
+        <p class="text-gray-600 mb-6">กรอกข้อมูลให้ครบถ้วนเพื่อสร้างโพสต์ลง Facebook และบันทึกลงระบบรายงานผล</p>
+        
+        <form id="newsForm" class="space-y-6">
+            <div>
+                <label for="district" class="block text-sm font-medium text-gray-700 mb-1">อำเภอ <span class="text-red-500">*</span></label>
+                <select id="district" name="district" required class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    <!-- Options will be populated by JavaScript -->
+                </select>
+            </div>
+            <div>
+                <label for="category" class="block text-sm font-medium text-gray-700 mb-1">หมวดข่าว <span class="text-red-500">*</span></label>
+                <select id="category" name="category" required class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    <option value="ด้านการเกษตร">ด้านการเกษตร</option>
+                    <option value="เตือนภัยการระบาดศัตรูพืช">เตือนภัยการระบาดศัตรูพืช</option>
+                    <option value="ข่าวอื่นๆ">ข่าวอื่นๆ</option>
+                </select>
+            </div>
+            <div>
+                <label for="summary" class="block text-sm font-medium text-gray-700 mb-1">เนื้อหาข่าวสำหรับให้ AI เขียน <span class="text-red-500">*</span></label>
+                <textarea id="summary" name="summary" rows="5" required class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="ใส่ประเด็นสำคัญ, ใคร, ทำอะไร, ที่ไหน, เมื่อไหร่..."></textarea>
+            </div>
+            <div>
+                <label for="image" class="block text-sm font-medium text-gray-700 mb-1">รูปภาพประกอบ (1 รูป) <span class="text-red-500">*</span></label>
+                <input type="file" id="image" name="image" accept="image/jpeg, image/png" required class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
+                <img id="image-preview" class="mt-4 rounded-lg hidden" style="max-height: 200px;"/>
+            </div>
+            <button type="submit" id="submit-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <span id="submit-text">ส่งข้อมูล</span>
+                <span id="submit-spinner" class="hidden">
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </span>
+            </button>
+        </form>
+        <p id="userId" class="text-xs text-gray-400 mt-4 text-center"></p>
+    </div>
+
+    <script>
+        const KANCHANABURI_DISTRICTS = ["เมืองกาญจนบุรี", "ไทรโยค", "บ่อพลอย", "ศรีสวัสดิ์", "ท่ามะกา", "ท่าม่วง", "ทองผาภูมิ", "สังขละบุรี", "พนมทวน", "เลาขวัญ", "ด่านมะขามเตี้ย", "หนองปรือ", "ห้วยกระเจา"];
+        // 🛑🛑🛑 แก้ไข URL ตรงนี้ 🛑🛑🛑
+        const MAKE_WEBHOOK_URL = 'YOUR_MAKE_WEBHOOK_URL_HERE'; 
+        // 🛑🛑🛑 แก้ไข LIFF ID ตรงนี้ 🛑🛑🛑
+        const LIFF_ID = 'YOUR_LIFF_ID_HERE';
+
+        async function main() {
+            try {
+                await liff.init({ liffId: LIFF_ID });
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                    return;
+                }
+                const profile = await liff.getProfile();
+                document.getElementById('userId').textContent = `User ID: ${profile.userId}`;
+                
+                // Populate districts
+                const districtSelect = document.getElementById('district');
+                KANCHANABURI_DISTRICTS.forEach(d => {
+                    const option = document.createElement('option');
+                    option.value = d;
+                    option.textContent = d;
+                    districtSelect.appendChild(option);
+                });
+
+                // Show app and hide loader
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('app').classList.remove('hidden');
+
+            } catch (err) {
+                console.error(err);
+                alert('เกิดข้อผิดพลาดในการโหลด LIFF App');
+            }
+        }
+
+        main();
+
+        const form = document.getElementById('newsForm');
+        const submitButton = document.getElementById('submit-button');
+        const submitText = document.getElementById('submit-text');
+        const submitSpinner = document.getElementById('submit-spinner');
+        const imageInput = document.getElementById('image');
+        const imagePreview = document.getElementById('image-preview');
+
+        imageInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imagePreview.src = e.target.result;
+                    imagePreview.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                 imagePreview.classList.add('hidden');
+            }
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (MAKE_WEBHOOK_URL === 'YOUR_MAKE_WEBHOOK_URL_HERE') {
+                alert('กรุณาตั้งค่า Webhook URL ในไฟล์ index.html ก่อนครับ');
+                return;
+            }
+
+            submitButton.disabled = true;
+            submitText.classList.add('hidden');
+            submitSpinner.classList.remove('hidden');
+
+            const formData = new FormData(form);
+            const profile = await liff.getProfile();
+            formData.append('userId', profile.userId); // ส่ง User ID ไปด้วย
+            
+            try {
+                const response = await fetch(MAKE_WEBHOOK_URL, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    alert('ส่งข้อมูลสำเร็จ! ระบบกำลังดำเนินการสร้างโพสต์');
+                    liff.closeWindow(); // ปิดหน้าต่าง LIFF เมื่อสำเร็จ
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(`Server responded with ${response.status}: ${errorText}`);
+                }
+            } catch (error) {
+                console.error('Error submitting form:', error);
+                alert('เกิดข้อผิดพลาดในการส่งข้อมูล: ' + error.message);
+            } finally {
+                submitButton.disabled = false;
+                submitText.classList.remove('hidden');
+                submitSpinner.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
