@@ -66,9 +66,9 @@
     <script>
         const KANCHANABURI_DISTRICTS = ["เมืองกาญจนบุรี", "ไทรโยค", "บ่อพลอย", "ศรีสวัสดิ์", "ท่ามะกา", "ท่าม่วง", "ทองผาภูมิ", "สังขละบุรี", "พนมทวน", "เลาขวัญ", "ด่านมะขามเตี้ย", "หนองปรือ", "ห้วยกระเจา"];
         // 🛑🛑🛑 แก้ไข URL ตรงนี้ 🛑🛑🛑
-        const MAKE_WEBHOOK_URL = 'YOUR_MAKE_WEBHOOK_URL_HERE'; 
+        const MAKE_WEBHOOK_URL = 'https://hook.eu2.make.com/ixbuvohbb1l131teowbjqppir1pkd550'; 
         // 🛑🛑🛑 แก้ไข LIFF ID ตรงนี้ 🛑🛑🛑
-        const LIFF_ID = 'YOUR_LIFF_ID_HERE';
+        const LIFF_ID = 'https://liff.line.me/2008300845-zJqG4ZEZ';
 
         async function main() {
             try {
@@ -125,7 +125,7 @@
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            if (MAKE_WEBHOOK_URL === 'YOUR_MAKE_WEBHOOK_URL_HERE') {
+            if (MAKE_WEBHOOK_URL === 'https://hook.eu2.make.com/ixbuvohbb1l131teowbjqppir1pkd550') {
                 alert('กรุณาตั้งค่า Webhook URL ในไฟล์ index.html ก่อนครับ');
                 return;
             }
