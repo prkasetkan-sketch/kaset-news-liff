@@ -6,7 +6,6 @@
     <title>สร้างข่าวประชาสัมพันธ์</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
     <style>
         body { font-family: 'IBM Plex Sans Thai', sans-serif; }
         .loader { border-top-color: #3498db; animation: spin 1s linear infinite; }
@@ -62,12 +61,15 @@
             <div>
                 <label for="images" class="block text-sm font-medium text-gray-700 mb-1">รูปภาพประกอบ <span class="text-red-500">*</span></label>
                 <input type="file" id="images" name="images" accept="image/jpeg, image/png" required multiple class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
+                
+                <p id="size-warning" class="text-sm text-red-500 mt-2 font-semibold"></p>
+
                 <div id="image-preview-container" class="mt-4 grid grid-cols-3 gap-4"></div>
             </div>
-            <button type="submit" id="submit-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            <button type="submit" id="submit-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:cursor-not-allowed">
                 <span id="submit-text">ส่งข้อมูล</span>
                 <span id="submit-spinner" class="hidden">
-                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
@@ -125,12 +127,16 @@
         const submitSpinner = document.getElementById('submit-spinner');
         const imageInput = document.getElementById('images');
         const imagePreviewContainer = document.getElementById('image-preview-container');
+        const sizeWarning = document.getElementById('size-warning'); // ✅ 2. อ้างอิงถึง element แจ้งเตือน
 
         const sourceTypeSelect = document.getElementById('source_type');
         const districtContainer = document.getElementById('district_container');
         const groupContainer = document.getElementById('group_container');
         const districtSelect = document.getElementById('district');
         const groupSelect = document.getElementById('group_name');
+        
+        // ✅ 3. กำหนดขนาดไฟล์สูงสุด (4.5 MB)
+        const MAX_TOTAL_SIZE_BYTES = 4.5 * 1024 * 1024; 
 
         sourceTypeSelect.addEventListener('change', (e) => {
             const value = e.target.value;
@@ -138,7 +144,6 @@
                 districtContainer.classList.remove('hidden');
                 districtSelect.required = true;
                 districtSelect.disabled = false;
-                
                 groupContainer.classList.add('hidden');
                 groupSelect.required = false;
                 groupSelect.disabled = true;
@@ -146,7 +151,6 @@
                 groupContainer.classList.remove('hidden');
                 groupSelect.required = true;
                 groupSelect.disabled = false;
-
                 districtContainer.classList.add('hidden');
                 districtSelect.required = false;
                 districtSelect.disabled = true;
@@ -156,50 +160,51 @@
             }
         });
 
+        // ✅ 4. เขียน Logic การตรวจสอบขนาดไฟล์ใหม่ทั้งหมด
         imageInput.addEventListener('change', (event) => {
-            imagePreviewContainer.innerHTML = '';
+            imagePreviewContainer.innerHTML = ''; 
+            sizeWarning.textContent = '';
+            submitButton.disabled = false; // Reset ปุ่มทุกครั้งที่เลือกใหม่
+
             const files = event.target.files;
-            if (files) {
-                for (const file of files) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
-                        img.className = 'rounded-lg object-cover h-24 w-full';
-                        imagePreviewContainer.appendChild(img);
-                    };
-                    reader.readAsDataURL(file);
-                }
+            if (!files || files.length === 0) {
+                return;
+            }
+
+            let totalSize = 0;
+            for (const file of files) {
+                totalSize += file.size;
+
+                // แสดงรูปตัวอย่าง
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'rounded-lg object-cover h-24 w-full';
+                    imagePreviewContainer.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            }
+
+            const totalSizeMB = (totalSize / 1024 / 1024).toFixed(2);
+            
+            if (totalSize > MAX_TOTAL_SIZE_BYTES) {
+                submitButton.disabled = true; // ปิดปุ่ม
+                const excessSizeMB = ((totalSize - MAX_TOTAL_SIZE_BYTES) / 1024 / 1024).toFixed(2);
+                const avgSizeMB = totalSizeMB / files.length;
+                const imagesToRemove = Math.ceil(excessSizeMB / avgSizeMB);
+                
+                sizeWarning.textContent = `🔴 ขนาดไฟล์รวม ${totalSizeMB} MB เกินกำหนดไป ${excessSizeMB} MB! กรุณาลบออกประมาณ ${imagesToRemove} รูป`;
+                sizeWarning.classList.remove('text-green-500');
+                sizeWarning.classList.add('text-red-500');
+
+            } else {
+                sizeWarning.textContent = `🟢 ขนาดไฟล์รวม ${totalSizeMB} MB พร้อมส่ง`;
+                sizeWarning.classList.remove('text-red-500');
+                sizeWarning.classList.add('text-green-500');
             }
         });
 
-        // ✅ 2. สร้างฟังก์ชันสำหรับบีบอัดรูปภาพ
-        async function compressImages(files) {
-            const compressionOptions = {
-                maxSizeMB: 1,          // ขนาดไฟล์สูงสุดไม่เกิน 1 MB
-                maxWidthOrHeight: 1920,  // ความกว้างหรือสูงไม่เกิน 1920 pixels
-                useWebWorker: true,    // ใช้ Web Worker เพื่อการทำงานที่เร็วขึ้น
-            };
-
-            const compressedFiles = [];
-            for (const file of files) {
-                try {
-                    console.log(`Compressing ${file.name}... Original size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
-                    const compressedFile = await imageCompression(file, compressionOptions);
-                    console.log(`Compressed ${file.name}. New size: ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB`);
-                    compressedFiles.push(compressedFile);
-                } catch (error) {
-                    console.error('Image compression failed:', error);
-                    alert('เกิดข้อผิดพลาดในการบีบอัดรูปภาพ: ' + file.name);
-                    // ถ้าบีบอัดไม่ได้ ให้ใช้ไฟล์เดิมไปก่อน
-                    compressedFiles.push(file); 
-                }
-            }
-            return compressedFiles;
-        }
-
-
-        // ✅ 3. แก้ไข Event Listener ของฟอร์มให้เรียกใช้การบีบอัด
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -209,33 +214,17 @@
             }
 
             submitButton.disabled = true;
-            submitText.textContent = 'กำลังบีบอัดรูปภาพ...'; // แจ้งสถานะให้ผู้ใช้ทราบ
+            submitText.classList.add('hidden');
             submitSpinner.classList.remove('hidden');
 
-            // --- เริ่มขั้นตอนการบีบอัด ---
-            const originalFiles = imageInput.files;
-            const compressedFiles = await compressImages(originalFiles);
-            // --- จบขั้นตอนการบีบอัด ---
-            
-            submitText.textContent = 'กำลังส่งข้อมูล...';
-
-            const formData = new FormData();
+            const formData = new FormData(form);
             const profile = await liff.getProfile();
-
-            // Append ข้อมูลอื่นๆ ลงใน FormData
             formData.append('userId', profile.userId);
-            formData.append('source_type', sourceTypeSelect.value);
-            if (sourceTypeSelect.value === 'district') {
-                formData.append('district', districtSelect.value);
-            } else if (sourceTypeSelect.value === 'province') {
-                formData.append('group_name', groupSelect.value);
-            }
-            formData.append('category', document.getElementById('category').value);
-            formData.append('summary', document.getElementById('summary').value);
             
-            // Append รูปภาพที่บีบอัดแล้ว
-            for (const file of compressedFiles) {
-                formData.append('images', file, file.name);
+            if (sourceTypeSelect.value === 'district') {
+                formData.delete('group_name');
+            } else if (sourceTypeSelect.value === 'province') {
+                formData.delete('district');
             }
             
             try {
@@ -256,7 +245,7 @@
                 alert('เกิดข้อผิดพลาดในการส่งข้อมูล: ' + error.message);
             } finally {
                 submitButton.disabled = false;
-                submitText.textContent = 'ส่งข้อมูล'; // คืนค่าข้อความปุ่ม
+                submitText.classList.remove('hidden');
                 submitSpinner.classList.add('hidden');
             }
         });
