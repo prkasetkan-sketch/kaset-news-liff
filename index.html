@@ -28,11 +28,26 @@
         
         <form id="newsForm" class="space-y-6">
             <div>
-                <label for="district" class="block text-sm font-medium text-gray-700 mb-1">อำเภอ <span class="text-red-500">*</span></label>
-                <select id="district" name="district" required class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                    <!-- Options will be populated by JavaScript -->
+                <label for="source_type" class="block text-sm font-medium text-gray-700 mb-1">แหล่งข่าว <span class="text-red-500">*</span></label>
+                <select id="source_type" name="source_type" required class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    <option value="">-- กรุณาเลือก --</option>
+                    <option value="district">อำเภอ</option>
+                    <option value="province">สำนักงานเกษตรจังหวัด</option>
                 </select>
             </div>
+
+            <div id="district_container" class="hidden">
+                <label for="district" class="block text-sm font-medium text-gray-700 mb-1">อำเภอ <span class="text-red-500">*</span></label>
+                <select id="district" name="district" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </select>
+            </div>
+
+            <div id="group_container" class="hidden">
+                <label for="group_name" class="block text-sm font-medium text-gray-700 mb-1">กลุ่มงาน (จังหวัด) <span class="text-red-500">*</span></label>
+                <select id="group_name" name="group_name" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </select>
+            </div>
+            
             <div>
                 <label for="category" class="block text-sm font-medium text-gray-700 mb-1">หมวดข่าว <span class="text-red-500">*</span></label>
                 <select id="category" name="category" required class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
@@ -46,9 +61,9 @@
                 <textarea id="summary" name="summary" rows="5" required class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="ใส่ประเด็นสำคัญ, ใคร, ทำอะไร, ที่ไหน, เมื่อไหร่..."></textarea>
             </div>
             <div>
-                <label for="image" class="block text-sm font-medium text-gray-700 mb-1">รูปภาพประกอบ (1 รูป) <span class="text-red-500">*</span></label>
-                <input type="file" id="image" name="image" accept="image/jpeg, image/png" required class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
-                <img id="image-preview" class="mt-4 rounded-lg hidden" style="max-height: 200px;"/>
+                <label for="images" class="block text-sm font-medium text-gray-700 mb-1">รูปภาพประกอบ <span class="text-red-500">*</span></label>
+                <input type="file" id="images" name="images" accept="image/jpeg, image/png" required multiple class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
+                <div id="image-preview-container" class="mt-4 grid grid-cols-3 gap-4"></div>
             </div>
             <button type="submit" id="submit-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 <span id="submit-text">ส่งข้อมูล</span>
@@ -65,10 +80,12 @@
 
     <script>
         const KANCHANABURI_DISTRICTS = ["เมืองกาญจนบุรี", "ไทรโยค", "บ่อพลอย", "ศรีสวัสดิ์", "ท่ามะกา", "ท่าม่วง", "ทองผาภูมิ", "สังขละบุรี", "พนมทวน", "เลาขวัญ", "ด่านมะขามเตี้ย", "หนองปรือ", "ห้วยกระเจา"];
-        // 🛑🛑🛑 แก้ไข URL ตรงนี้ 🛑🛑🛑
+        // ✅ เพิ่มกลุ่มงานของจังหวัด
+        const PROVINCIAL_GROUPS = ["กลุ่มยุทธศาสตร์และสารสนเทศ", "กลุ่มส่งเสริมและพัฒนาการผลิต", "กลุ่มส่งเสริมและพัฒนาเกษตรกร", "กลุ่มอารักขาพืช", "ฝ่ายบริหารทั่วไป"];
+        
+        // 🛑🛑🛑 แก้ไข URL และ LIFF ID ของคุณตรงนี้ 🛑🛑🛑
         const MAKE_WEBHOOK_URL = 'https://hook.eu2.make.com/ixbuvohbb1l131teowbjqppir1pkd550'; 
-        // 🛑🛑🛑 แก้ไข LIFF ID ตรงนี้ 🛑🛑🛑
-        const LIFF_ID = '2008300845-zJqG4ZEZ';
+        const LIFF_ID = 'Y2008300845-zJqG4ZEZ';
 
         async function main() {
             try {
@@ -80,22 +97,26 @@
                 const profile = await liff.getProfile();
                 document.getElementById('userId').textContent = `User ID: ${profile.userId}`;
                 
-                // Populate districts
-                const districtSelect = document.getElementById('district');
-                KANCHANABURI_DISTRICTS.forEach(d => {
-                    const option = document.createElement('option');
-                    option.value = d;
-                    option.textContent = d;
-                    districtSelect.appendChild(option);
-                });
+                // Populate dropdowns
+                const populateSelect = (elementId, options) => {
+                    const select = document.getElementById(elementId);
+                    select.innerHTML = ''; // Clear existing options
+                    options.forEach(opt => {
+                        const option = document.createElement('option');
+                        option.value = opt;
+                        option.textContent = opt;
+                        select.appendChild(option);
+                    });
+                };
+                populateSelect('district', KANCHANABURI_DISTRICTS);
+                populateSelect('group_name', PROVINCIAL_GROUPS);
 
-                // Show app and hide loader
                 document.getElementById('loading-screen').classList.add('hidden');
                 document.getElementById('app').classList.remove('hidden');
 
             } catch (err) {
                 console.error(err);
-                alert('เกิดข้อผิดพลาดในการโหลด LIFF App');
+                alert('เกิดข้อผิดพลาดในการโหลด LIFF App: ' + err.message);
             }
         }
 
@@ -105,20 +126,55 @@
         const submitButton = document.getElementById('submit-button');
         const submitText = document.getElementById('submit-text');
         const submitSpinner = document.getElementById('submit-spinner');
-        const imageInput = document.getElementById('image');
-        const imagePreview = document.getElementById('image-preview');
+        const imageInput = document.getElementById('images');
+        const imagePreviewContainer = document.getElementById('image-preview-container');
 
-        imageInput.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    imagePreview.src = e.target.result;
-                    imagePreview.classList.remove('hidden');
-                };
-                reader.readAsDataURL(file);
+        // ✅ 4. เพิ่ม Logic การซ่อน/แสดง Dropdown
+        const sourceTypeSelect = document.getElementById('source_type');
+        const districtContainer = document.getElementById('district_container');
+        const groupContainer = document.getElementById('group_container');
+        const districtSelect = document.getElementById('district');
+        const groupSelect = document.getElementById('group_name');
+
+        sourceTypeSelect.addEventListener('change', (e) => {
+            const value = e.target.value;
+            if (value === 'district') {
+                districtContainer.classList.remove('hidden');
+                districtSelect.required = true;
+                districtSelect.disabled = false;
+                
+                groupContainer.classList.add('hidden');
+                groupSelect.required = false;
+                groupSelect.disabled = true;
+            } else if (value === 'province') {
+                groupContainer.classList.remove('hidden');
+                groupSelect.required = true;
+                groupSelect.disabled = false;
+
+                districtContainer.classList.add('hidden');
+                districtSelect.required = false;
+                districtSelect.disabled = true;
             } else {
-                 imagePreview.classList.add('hidden');
+                districtContainer.classList.add('hidden');
+                groupContainer.classList.add('hidden');
+            }
+        });
+
+        // ✅ 5. แก้ไขให้รองรับการแสดงผลหลายรูป
+        imageInput.addEventListener('change', (event) => {
+            imagePreviewContainer.innerHTML = ''; // Clear previous previews
+            const files = event.target.files;
+            if (files) {
+                for (const file of files) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'rounded-lg object-cover h-24 w-full';
+                        imagePreviewContainer.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                }
             }
         });
 
@@ -136,7 +192,14 @@
 
             const formData = new FormData(form);
             const profile = await liff.getProfile();
-            formData.append('userId', profile.userId); // ส่ง User ID ไปด้วย
+            formData.append('userId', profile.userId);
+            
+            // ✅ 6. ลบ field ที่ไม่ถูกเลือกออกก่อนส่ง
+            if (sourceTypeSelect.value === 'district') {
+                formData.delete('group_name');
+            } else if (sourceTypeSelect.value === 'province') {
+                formData.delete('district');
+            }
             
             try {
                 const response = await fetch(MAKE_WEBHOOK_URL, {
@@ -146,7 +209,7 @@
 
                 if (response.ok) {
                     alert('ส่งข้อมูลสำเร็จ! ระบบกำลังดำเนินการสร้างโพสต์');
-                    liff.closeWindow(); // ปิดหน้าต่าง LIFF เมื่อสำเร็จ
+                    liff.closeWindow();
                 } else {
                     const errorText = await response.text();
                     throw new Error(`Server responded with ${response.status}: ${errorText}`);
