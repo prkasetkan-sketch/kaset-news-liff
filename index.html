@@ -6,7 +6,6 @@
     <title>สร้างข่าวประชาสัมพันธ์</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <!-- ✅ 1. เพิ่ม Library ของ Supabase เข้ามา -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'IBM Plex Sans Thai', sans-serif; }
@@ -79,8 +78,7 @@
     </div>
 
     <script>
-        // --- ✅ 2. เพิ่มการตั้งค่าสำหรับ Supabase ---
-        // 🛑🛑🛑 ไปที่ Supabase > Project Settings > API แล้วคัดลอกค่ามาใส่ 🛑🛑🛑
+        // --- ✅ การตั้งค่าสำหรับ Supabase ---
         const SUPABASE_URL = 'https://ngreqaszduphwftwswdj.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ncmVxYXN6ZHVwaHdmdHdzd2RqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxMTcyNTMsImV4cCI6MjA3NTY5MzI1M30.balzxiWXum4lnl6dCrNzSoF02tRfmG19rEqMnHSynwk';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -88,8 +86,6 @@
         // --- การตั้งค่าอื่นๆ ---
         const KANCHANABURI_DISTRICTS = ["เมืองกาญจนบุรี", "ไทรโยค", "บ่อพลอย", "ศรีสวัสดิ์", "ท่ามะกา", "ท่าม่วง", "ทองผาภูมิ", "สังขละบุรี", "พนมทวน", "เลาขวัญ", "ด่านมะขามเตี้ย", "หนองปรือ", "ห้วยกระเจา"];
         const PROVINCIAL_GROUPS = ["กลุ่มยุทธศาสตร์และสารสนเทศ", "กลุ่มส่งเสริมและพัฒนาการผลิต", "กลุ่มส่งเสริมและพัฒนาเกษตรกร", "กลุ่มอารักขาพืช", "ฝ่ายบริหารทั่วไป"];
-        
-        // 🛑🛑🛑 แก้ไข URL และ LIFF ID ของคุณตรงนี้ 🛑🛑🛑
         const MAKE_WEBHOOK_URL = 'https://hook.eu2.make.com/1rem0w234uqbka4sp1adg5ww83y63mo6'; 
         const LIFF_ID = '2008300845-zJqG4ZEZ';
         
@@ -107,7 +103,7 @@
                 
                 const populateSelect = (elementId, options) => {
                     const select = document.getElementById(elementId);
-                    select.innerHTML = '<option value="">-- กรุณาเลือก --</option>'; // Add a default empty option
+                    select.innerHTML = '<option value="">-- กรุณาเลือก --</option>';
                     options.forEach(opt => {
                         const option = document.createElement('option');
                         option.value = opt;
@@ -194,9 +190,10 @@
         imageInput.addEventListener('change', (event) => {
             selectedFiles = [...selectedFiles, ...Array.from(event.target.files)];
             renderPreviews();
-            imageInput.value = ''; // Clear the input so the user can select the same file again if they delete it
+            imageInput.value = '';
         });
 
+        // ✅✅✅ นี่คือส่วนที่แก้ไขใหม่ทั้งหมด ✅✅✅
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -213,27 +210,39 @@
             submitText.textContent = 'กำลังอัปโหลดรูปภาพ... (0%)';
             submitSpinner.classList.remove('hidden');
 
-            const uploadPromises = selectedFiles.map(async (file, index) => {
-                const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
-                const { error } = await supabaseClient.storage
-                    .from('news-images')
-                    .upload(fileName, file);
-                
-                if (error) throw new Error(`ไม่สามารถอัปโหลดไฟล์: ${file.name}`);
-                
-                const percent = Math.round(((index + 1) / selectedFiles.length) * 100);
-                submitText.textContent = `กำลังอัปโหลดรูปภาพ... (${percent}%)`;
-
-                const { data } = supabaseClient.storage.from('news-images').getPublicUrl(fileName);
-                return data.publicUrl;
-            });
-
             try {
-                const imageUrls = await Promise.all(uploadPromises);
+                const imageUrls = [];
+                for (let i = 0; i < selectedFiles.length; i++) {
+                    const file = selectedFiles[i];
+                    const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+                    
+                    // 1. อัปโหลดไฟล์
+                    const { error: uploadError } = await supabaseClient.storage
+                        .from('news-images')
+                        .upload(fileName, file);
+                    
+                    if (uploadError) {
+                        throw new Error(`ไม่สามารถอัปโหลดไฟล์: ${file.name} - ${uploadError.message}`);
+                    }
+
+                    // 2. ดึง Public URL กลับมา
+                    const { data: urlData } = supabaseClient.storage.from('news-images').getPublicUrl(fileName);
+                    
+                    if (!urlData || !urlData.publicUrl) {
+                        throw new Error(`ไม่สามารถดึง Public URL ของไฟล์: ${file.name}`);
+                    }
+                    
+                    imageUrls.push(urlData.publicUrl);
+                    
+                    // อัปเดตสถานะ
+                    const percent = Math.round(((i + 1) / selectedFiles.length) * 100);
+                    submitText.textContent = `กำลังอัปโหลดรูปภาพ... (${percent}%)`;
+                }
+
                 submitText.textContent = 'กำลังส่งข้อมูลไปประมวลผล...';
 
+                // 3. ส่งข้อมูล (Payload) ไปที่ Make.com
                 const profile = await liff.getProfile();
-                
                 const payload = {
                     userId: profile.userId,
                     source_type: sourceTypeSelect.value,
@@ -241,7 +250,7 @@
                     group_name: sourceTypeSelect.value === 'province' ? groupSelect.value : null,
                     category: document.getElementById('category').value,
                     summary: document.getElementById('summary').value,
-                    imageUrls: imageUrls
+                    imageUrls: imageUrls // ส่ง Array ของ URL ที่สมบูรณ์
                 };
 
                 const response = await fetch(MAKE_WEBHOOK_URL, {
@@ -269,4 +278,3 @@
     </script>
 </body>
 </html>
-
