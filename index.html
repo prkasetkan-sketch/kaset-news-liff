@@ -7,262 +7,315 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'IBM Plex Sans Thai', sans-serif; }
-        .loader { border-top-color: #3498db; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        /* Animation สำหรับปุ่มโหลด */
+        .btn-progress {
+            background-size: 200% 200%;
+            animation: gradientMove 2s ease infinite;
+        }
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
     </style>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gray-100">
+<body class="bg-slate-100 min-h-screen pb-12">
+
     <div id="loading-screen" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center">
-        <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-24 w-24 mb-4"></div>
-        <h2 class="text-center text-xl font-semibold">กำลังโหลดข้อมูล...</h2>
-        <p class="text-center text-gray-500">กรุณารอสักครู่</p>
+        <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-green-600"></div>
+        <p class="mt-4 text-gray-500 font-medium" id="loading-text">กำลังโหลดข้อมูล...</p>
     </div>
 
-    <div id="app" class="max-w-xl mx-auto p-6 bg-white shadow-md rounded-lg mt-10 hidden">
-        <h1 class="text-2xl font-bold mb-2 text-gray-800">สร้างโพสต์ข่าวอัตโนมัติ</h1>
-        <p class="text-gray-600 mb-6">กรอกข้อมูลให้ครบถ้วนเพื่อสร้างโพสต์ลง Facebook และบันทึกลงระบบรายงานผล</p>
-        
-        <form id="newsForm" class="space-y-6">
-            <div>
-                <label for="source_type" class="block text-sm font-medium text-gray-700 mb-1">แหล่งข่าว <span class="text-red-500">*</span></label>
-                <select id="source_type" name="source_type" required class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                    <option value="">-- กรุณาเลือก --</option>
-                    <option value="district">อำเภอ</option>
-                    <option value="province">สำนักงานเกษตรจังหวัด</option>
-                </select>
+    <div id="app" class="max-w-xl mx-auto hidden">
+        <div class="bg-gradient-to-r from-green-700 to-emerald-600 p-4 sticky top-0 z-20 shadow-lg">
+            <h1 class="text-white text-lg font-bold flex items-center gap-2">
+                📢 สร้างข่าวประชาสัมพันธ์
+            </h1>
+            <p class="text-green-100 text-xs">ระบบโพสต์ข่าวอัตโนมัติ (Resize & Progress)</p>
+        </div>
+
+        <form id="newsForm" class="p-4 space-y-5">
+
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 space-y-4">
+                <div class="flex items-center gap-2 text-green-800 font-bold border-b pb-2">
+                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">1</span> แหล่งที่มาของข่าว
+                </div>
+                
+                <div>
+                    <label class="text-sm font-medium text-gray-700">หน่วยงานต้นสังกัด <span class="text-red-500">*</span></label>
+                    <select id="source_type" class="w-full mt-1 p-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-green-500">
+                        <option value="">-- กรุณาเลือก --</option>
+                        <option value="province">สำนักงานเกษตรจังหวัด</option>
+                        <option value="district">สำนักงานเกษตรอำเภอ</option>
+                    </select>
+                </div>
+
+                <div id="group_container" class="hidden animate-fade-in">
+                    <label class="text-sm font-medium text-gray-700">กลุ่ม/ฝ่าย เจ้าของเรื่อง <span class="text-red-500">*</span></label>
+                    <select id="group_name" class="w-full mt-1 p-2 border rounded-lg bg-white border-green-200 text-green-800 font-medium focus:ring-2 focus:ring-green-500"></select>
+                </div>
+                
+                <div id="district_container" class="hidden animate-fade-in">
+                    <label class="text-sm font-medium text-gray-700">อำเภอ <span class="text-red-500">*</span></label>
+                    <select id="district" class="w-full mt-1 p-2 border rounded-lg bg-white focus:ring-2 focus:ring-green-500"></select>
+                </div>
             </div>
 
-            <div id="district_container" class="hidden">
-                <label for="district" class="block text-sm font-medium text-gray-700 mb-1">อำเภอ <span class="text-red-500">*</span></label>
-                <select id="district" name="district" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></select>
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 space-y-4">
+                <div class="flex items-center gap-2 text-green-800 font-bold border-b pb-2">
+                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">2</span> รายละเอียดเนื้อหา
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-700">เนื้อหาข่าว (Prompt) <span class="text-red-500">*</span></label>
+                    <textarea id="summary" rows="6" required placeholder="ใส่ประเด็นสำคัญ, ใคร, ทำอะไร, ที่ไหน, เมื่อไหร่... (เพื่อให้ AI เรียบเรียง)" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-green-500"></textarea>
+                </div>
             </div>
 
-            <div id="group_container" class="hidden">
-                <label for="group_name" class="block text-sm font-medium text-gray-700 mb-1">กลุ่มงาน (จังหวัด) <span class="text-red-500">*</span></label>
-                <select id="group_name" name="group_name" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></select>
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 space-y-4">
+                <div class="flex items-center gap-2 text-green-800 font-bold border-b pb-2">
+                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">3</span> รูปภาพประกอบ
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-700">อัปโหลดรูปภาพ (เลือกได้หลายรูป) <span class="text-red-500">*</span></label>
+                    <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition relative overflow-hidden">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <svg class="w-8 h-8 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            <p class="text-sm text-gray-500">แตะเพื่อเลือกรูปภาพ</p>
+                        </div>
+                        <input type="file" id="images" multiple accept="image/*" class="hidden" />
+                    </label>
+                    <div id="image_preview" class="grid grid-cols-3 gap-2 mt-3"></div>
+                </div>
             </div>
-            <div>
-                <label for="summary" class="block text-sm font-medium text-gray-700 mb-1">เนื้อหาข่าวสำหรับให้ AI เขียน <span class="text-red-500">*</span></label>
-                <textarea id="summary" name="summary" rows="5" required class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="ใส่ประเด็นสำคัญ, ใคร, ทำอะไร, ที่ไหน, เมื่อไหร่..."></textarea>
+
+            <div class="pt-2 sticky bottom-0 pb-4 bg-slate-100/90 backdrop-blur-sm">
+                <button type="submit" id="submit_btn" class="w-full py-4 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl font-bold text-lg shadow-lg hover:from-green-700 hover:to-green-800 transition transform active:scale-95 disabled:opacity-75 disabled:cursor-not-allowed">
+                    🚀 ส่งข้อมูลสร้างโพสต์
+                </button>
             </div>
-            <div>
-                <label for="images" class="block text-sm font-medium text-gray-700 mb-1">รูปภาพประกอบ <span class="text-red-500">*</span></label>
-                <input type="file" id="images" accept="image/jpeg, image/png" required multiple class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
-                <div id="image-preview-container" class="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4"></div>
-            </div>
-            <button type="submit" id="submit-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:cursor-not-allowed">
-                <span id="submit-text">ส่งข้อมูล</span>
-                <span id="submit-spinner" class="hidden">
-                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                </span>
-            </button>
+            
+            <p id="userIdDisplay" class="text-center text-xs text-gray-400 pb-8">User: Guest</p>
         </form>
-        <p id="userId" class="text-xs text-gray-400 mt-4 text-center"></p>
     </div>
 
     <script>
-        // --- ✅ การตั้งค่าสำหรับ Supabase ---
+        // --- ⚙️ ตั้งค่าระบบ (CONFIG) ---
+        const LIFF_ID = '2008300845-zJqG4ZEZ';
+        const WEBHOOK_URL = 'https://hook.eu2.make.com/1rem0w234uqbka4sp1adg5ww83y63mo6';
         const SUPABASE_URL = 'https://ngreqaszduphwftwswdj.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ncmVxYXN6ZHVwaHdmdHdzd2RqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxMTcyNTMsImV4cCI6MjA3NTY5MzI1M30.balzxiWXum4lnl6dCrNzSoF02tRfmG19rEqMnHSynwk';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ncmVxYXN6ZHVwaHdmdHdzd2RqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxMTcyNTMsImV4cCI6MjA3NTY5MzI1M30.balzxiWXum4lnl6dCrNzSoF02tRfmG19rEqMnHSynwk';
 
-        // --- การตั้งค่าอื่นๆ ---
+        // ข้อมูลตัวเลือก
         const KANCHANABURI_DISTRICTS = ["เมืองกาญจนบุรี", "ไทรโยค", "บ่อพลอย", "ศรีสวัสดิ์", "ท่ามะกา", "ท่าม่วง", "ทองผาภูมิ", "สังขละบุรี", "พนมทวน", "เลาขวัญ", "ด่านมะขามเตี้ย", "หนองปรือ", "ห้วยกระเจา"];
         const PROVINCIAL_GROUPS = ["กลุ่มยุทธศาสตร์และสารสนเทศ", "กลุ่มส่งเสริมและพัฒนาการผลิต", "กลุ่มส่งเสริมและพัฒนาเกษตรกร", "กลุ่มอารักขาพืช", "ฝ่ายบริหารทั่วไป"];
-        const MAKE_WEBHOOK_URL = 'https://hook.eu2.make.com/1rem0w234uqbka4sp1adg5ww83y63mo6'; 
-        const LIFF_ID = '2008300845-zJqG4ZEZ';
-        
-        let selectedFiles = [];
 
-        async function main() {
-             try {
-                await liff.init({ liffId: LIFF_ID });
-                if (!liff.isLoggedIn()) {
-                    liff.login();
-                    return;
-                }
-                const profile = await liff.getProfile();
-                document.getElementById('userId').textContent = `User ID: ${profile.userId}`;
+        // ตัวแปรระบบ
+        let files = [];
+        let userId = "guest";
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // --- เริ่มต้นระบบ ---
+        (async () => {
+            try {
+                // Populate Dropdowns
+                const dSel = document.getElementById('district');
+                KANCHANABURI_DISTRICTS.forEach(d => dSel.innerHTML += `<option value="${d}">${d}</option>`);
                 
-                const populateSelect = (elementId, options) => {
-                    const select = document.getElementById(elementId);
-                    select.innerHTML = '<option value="">-- กรุณาเลือก --</option>';
-                    options.forEach(opt => {
-                        const option = document.createElement('option');
-                        option.value = opt;
-                        option.textContent = opt;
-                        select.appendChild(option);
-                    });
-                };
-                populateSelect('district', KANCHANABURI_DISTRICTS);
-                populateSelect('group_name', PROVINCIAL_GROUPS);
+                const gSel = document.getElementById('group_name');
+                PROVINCIAL_GROUPS.forEach(g => gSel.innerHTML += `<option value="${g}">${g}</option>`);
+
+                // LIFF Init
+                try {
+                    await liff.init({ liffId: LIFF_ID });
+                    if (liff.isLoggedIn()) {
+                        const profile = await liff.getProfile();
+                        userId = profile.userId;
+                        document.getElementById('userIdDisplay').innerText = `User ID: ${userId}`;
+                    } else {
+                        liff.login();
+                    }
+                } catch(e) { console.warn('Dev Mode / LIFF Error:', e); }
 
                 document.getElementById('loading-screen').classList.add('hidden');
                 document.getElementById('app').classList.remove('hidden');
 
             } catch (err) {
-                console.error(err);
-                alert('เกิดข้อผิดพลาดในการโหลด LIFF App: ' + err.message);
+                alert('เกิดข้อผิดพลาด: ' + err.message);
             }
-        }
-        main();
+        })();
 
-        const form = document.getElementById('newsForm');
-        const submitButton = document.getElementById('submit-button');
-        const submitText = document.getElementById('submit-text');
-        const submitSpinner = document.getElementById('submit-spinner');
-        const imageInput = document.getElementById('images');
-        const imagePreviewContainer = document.getElementById('image-preview-container');
+        // --- Event Listeners ---
 
-        const sourceTypeSelect = document.getElementById('source_type');
-        const districtContainer = document.getElementById('district_container');
-        const groupContainer = document.getElementById('group_container');
-        const districtSelect = document.getElementById('district');
-        const groupSelect = document.getElementById('group_name');
+        // 1. เปลี่ยนประเภทหน่วยงาน -> โชว์ Dropdown ที่เกี่ยวข้อง
+        document.getElementById('source_type').addEventListener('change', (e) => {
+            const val = e.target.value;
+            const distDiv = document.getElementById('district_container');
+            const groupDiv = document.getElementById('group_container');
+            const distInput = document.getElementById('district');
+            const groupInput = document.getElementById('group_name');
 
-        sourceTypeSelect.addEventListener('change', (e) => {
-            const value = e.target.value;
-            if (value === 'district') {
-                districtContainer.classList.remove('hidden');
-                districtSelect.required = true;
-                groupContainer.classList.add('hidden');
-                groupSelect.required = false;
-            } else if (value === 'province') {
-                groupContainer.classList.remove('hidden');
-                groupSelect.required = true;
-                districtContainer.classList.add('hidden');
-                districtSelect.required = false;
+            if (val === 'district') {
+                distDiv.classList.remove('hidden');
+                distInput.required = true;
+                groupDiv.classList.add('hidden');
+                groupInput.required = false;
+            } else if (val === 'province') {
+                groupDiv.classList.remove('hidden');
+                groupInput.required = true;
+                distDiv.classList.add('hidden');
+                distInput.required = false;
             } else {
-                districtContainer.classList.add('hidden');
-                groupContainer.classList.add('hidden');
-                districtSelect.required = false;
-                groupSelect.required = false;
+                distDiv.classList.add('hidden');
+                groupDiv.classList.add('hidden');
+                distInput.required = false;
+                groupInput.required = false;
             }
         });
-        
-        function renderPreviews() {
-            imagePreviewContainer.innerHTML = '';
-            selectedFiles.forEach((file, index) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const previewWrapper = document.createElement('div');
-                    previewWrapper.className = 'relative group';
 
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.className = 'rounded-lg object-cover h-24 w-full';
+        // 2. จัดการรูปภาพ (Resize & Preview)
+        document.getElementById('images').addEventListener('change', async (e) => {
+            const newFiles = Array.from(e.target.files);
+            const pv = document.getElementById('image_preview');
+            const loadingId = 'loading-' + Date.now();
+            
+            pv.innerHTML += `<div id="${loadingId}" class="text-xs text-gray-500 col-span-3 text-center py-4 bg-gray-50 rounded animate-pulse">⏳ กำลังบีบอัดรูปภาพ...</div>`;
+
+            for (let file of newFiles) {
+                try {
+                    const resizedFile = await resizeImage(file, 1280, 0.8); 
+                    files.push(resizedFile);
                     
-                    const deleteButton = document.createElement('button');
-                    deleteButton.innerHTML = '&times;';
-                    deleteButton.className = 'absolute top-0 right-0 -mt-2 -mr-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center font-bold text-xl leading-none opacity-0 group-hover:opacity-100 transition-opacity';
-                    deleteButton.onclick = (event) => {
-                        event.preventDefault();
-                        selectedFiles.splice(index, 1);
-                        renderPreviews();
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        const loader = document.getElementById(loadingId);
+                        if(loader) loader.remove();
+                        const i = files.length - 1;
+                        pv.innerHTML += `
+                            <div class="relative group animate-fade-in">
+                                <img src="${ev.target.result}" class="w-full h-24 object-cover rounded-lg border shadow-sm">
+                                <button type="button" onclick="rmImg(${i})" class="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs shadow-md hover:scale-110 transition">✕</button>
+                            </div>`;
                     };
+                    reader.readAsDataURL(resizedFile);
+                } catch (err) { console.error('Resize error:', err); }
+            }
+        });
 
-                    previewWrapper.appendChild(img);
-                    previewWrapper.appendChild(deleteButton);
-                    imagePreviewContainer.appendChild(previewWrapper);
+        window.rmImg = (index) => { 
+            files.splice(index, 1); 
+            const pv = document.getElementById('image_preview');
+            pv.innerHTML = '';
+            files.forEach((f, i) => {
+                const r = new FileReader();
+                r.onload = (ev) => {
+                    pv.innerHTML += `
+                        <div class="relative group">
+                            <img src="${ev.target.result}" class="w-full h-24 object-cover rounded-lg border shadow-sm">
+                            <button type="button" onclick="rmImg(${i})" class="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs shadow-md hover:scale-110 transition">✕</button>
+                        </div>`;
+                }
+                r.readAsDataURL(f);
+            });
+        };
+
+        // ฟังก์ชันย่อรูป
+        function resizeImage(file, maxWidth, quality) {
+            return new Promise((resolve, reject) => {
+                if (!file.type.match(/image.*/)) { reject(new Error("Not an image")); return; }
+                const reader = new FileReader();
+                reader.onload = (readerEvent) => {
+                    const image = new Image();
+                    image.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = image.width;
+                        let height = image.height;
+                        if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(image, 0, 0, width, height);
+                        canvas.toBlob((blob) => {
+                            if (!blob) { reject(new Error("Canvas is empty")); return; }
+                            const resizedFile = new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() });
+                            resolve(resizedFile);
+                        }, 'image/jpeg', quality);
+                    };
+                    image.src = readerEvent.target.result;
                 };
                 reader.readAsDataURL(file);
             });
-            imageInput.required = selectedFiles.length === 0;
         }
 
-        imageInput.addEventListener('change', (event) => {
-            selectedFiles = [...selectedFiles, ...Array.from(event.target.files)];
-            renderPreviews();
-            imageInput.value = '';
-        });
-
-        // ✅✅✅ นี่คือส่วนที่แก้ไขใหม่ทั้งหมด ✅✅✅
-        form.addEventListener('submit', async (e) => {
+        // 3. ส่งข้อมูล (Submit)
+        document.getElementById('newsForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const btn = document.getElementById('submit_btn');
             
-            if (SUPABASE_URL === 'YOUR_SUPABASE_URL' || MAKE_WEBHOOK_URL === 'YOUR_MAKE_WEBHOOK_URL_HERE' || LIFF_ID === 'YOUR_LIFF_ID_HERE') {
-                alert('กรุณาตั้งค่า Supabase, Webhook, และ LIFF ID ในไฟล์ index.html ก่อนครับ');
-                return;
-            }
-            if(selectedFiles.length === 0){
-                alert('กรุณาเลือกรูปภาพอย่างน้อย 1 รูปครับ');
-                return;
-            }
+            // Validation
+            const sourceType = document.getElementById('source_type').value;
+            if(!sourceType) return alert('กรุณาเลือกหน่วยงานต้นสังกัด');
+            if(files.length === 0) return alert('📸 กรุณาใส่รูปภาพประกอบอย่างน้อย 1 รูปครับ');
 
-            submitButton.disabled = true;
-            submitText.textContent = 'กำลังอัปโหลดรูปภาพ... (0%)';
-            submitSpinner.classList.remove('hidden');
-
+            // Start Loading
+            btn.disabled = true;
+            btn.classList.add('btn-progress', 'from-green-500', 'to-emerald-600');
+            
             try {
+                // 1. Upload Images
                 const imageUrls = [];
-                for (let i = 0; i < selectedFiles.length; i++) {
-                    const file = selectedFiles[i];
-                    const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
-                    
-                    // 1. อัปโหลดไฟล์
-                    const { error: uploadError } = await supabaseClient.storage
-                        .from('news-images')
-                        .upload(fileName, file);
-                    
-                    if (uploadError) {
-                        throw new Error(`ไม่สามารถอัปโหลดไฟล์: ${file.name} - ${uploadError.message}`);
-                    }
+                for (let i = 0; i < files.length; i++) {
+                    const f = files[i];
+                    // Update Progress bar text
+                    const percent = Math.round(((i) / files.length) * 100);
+                    btn.innerHTML = `⏳ กำลังอัปโหลด... ${percent}%`;
 
-                    // 2. ดึง Public URL กลับมา
-                    const { data: urlData } = supabaseClient.storage.from('news-images').getPublicUrl(fileName);
-                    
-                    if (!urlData || !urlData.publicUrl) {
-                        throw new Error(`ไม่สามารถดึง Public URL ของไฟล์: ${file.name}`);
-                    }
-                    
-                    imageUrls.push(urlData.publicUrl);
-                    
-                    // อัปเดตสถานะ
-                    const percent = Math.round(((i + 1) / selectedFiles.length) * 100);
-                    submitText.textContent = `กำลังอัปโหลดรูปภาพ... (${percent}%)`;
+                    const fname = `pr-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+                    const { error } = await sb.storage.from('news-images').upload(fname, f);
+                    if(error) throw error;
+                    const { data } = sb.storage.from('news-images').getPublicUrl(fname);
+                    imageUrls.push(data.publicUrl);
                 }
 
-                submitText.textContent = 'กำลังส่งข้อมูลไปประมวลผล...';
+                btn.innerHTML = `⏳ กำลังส่งข้อมูล... 100%`;
 
-                // 3. ส่งข้อมูล (Payload) ไปที่ Make.com
-                const profile = await liff.getProfile();
+                // 2. Prepare Payload
                 const payload = {
-                    userId: profile.userId,
-                    source_type: sourceTypeSelect.value,
-                    district: sourceTypeSelect.value === 'district' ? districtSelect.value : null,
-                    group_name: sourceTypeSelect.value === 'province' ? groupSelect.value : null,
+                    userId: userId,
+                    source_type: sourceType,
+                    district: sourceType === 'district' ? document.getElementById('district').value : null,
+                    group_name: sourceType === 'province' ? document.getElementById('group_name').value : null,
                     summary: document.getElementById('summary').value,
-                    imageUrls: imageUrls // ส่ง Array ของ URL ที่สมบูรณ์
+                    imageUrls: imageUrls
                 };
 
-                const response = await fetch(MAKE_WEBHOOK_URL, {
+                // 3. Send to Make
+                const res = await fetch(WEBHOOK_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify(payload)
                 });
 
-                if (response.ok) {
-                    alert('ส่งข้อมูลสำเร็จ! ระบบกำลังดำเนินการสร้างโพสต์');
-                    liff.closeWindow();
-                } else {
-                    const errorText = await response.text();
-                    throw new Error(`Server responded with ${response.status}: ${errorText}`);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('เกิดข้อผิดพลาด: ' + error.message);
-            } finally {
-                submitButton.disabled = false;
-                submitText.textContent = 'ส่งข้อมูล';
-                submitSpinner.classList.add('hidden');
+                if(!res.ok) throw new Error('Make Webhook Error');
+                
+                alert('✅ ส่งข้อมูลสำเร็จ! ระบบกำลังสร้างโพสต์ครับ');
+                liff.closeWindow();
+
+            } catch(err) {
+                console.error(err);
+                alert('เกิดข้อผิดพลาด: ' + err.message);
+                btn.disabled = false;
+                btn.classList.remove('btn-progress');
+                btn.innerHTML = '🚀 ส่งข้อมูลสร้างโพสต์';
             }
         });
     </script>
