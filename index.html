@@ -9,112 +9,119 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'IBM Plex Sans Thai', sans-serif; }
+        body { 
+            font-family: 'IBM Plex Sans Thai', sans-serif; 
+            background-color: #e4fde1; /* Frosted Mint */
+            color: #575761; /* Charcoal */
+        }
         
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #fff7ed; } /* Orange-50 */
-        ::-webkit-scrollbar-thumb { background: #fdba74; border-radius: 4px; } /* Orange-300 */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #648381; border-radius: 10px; } /* Deep Teal */
         
         /* Animations */
-        .animate-fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Radio Button Style (Green & Gold) */
-        .kaset-radio:checked + label { 
-            background-color: #ecfdf5; /* Emerald-50 */
-            border-color: #059669; /* Emerald-600 */
-            color: #065f46; 
-            box-shadow: 0 0 0 2px #fbbf24; /* Amber-400 Ring */
+        /* Modern Radio Input */
+        .kaset-radio:checked + label {
+            background: #fff;
+            border-color: #8acb88; /* Willow Green */
+            color: #575761; /* Charcoal */
+            box-shadow: 0 4px 6px -1px rgba(138, 203, 136, 0.4);
+            transform: translateY(-2px);
+            ring: 2px solid #8acb88;
         }
 
-        /* Progress Button Animation (Green -> Orange) */
-        .btn-progress {
-            background-size: 200% 200%;
-            animation: gradientMove 1.5s ease infinite;
+        /* Gradient Button Animation */
+        .btn-modern {
+            background-size: 200% auto;
+            transition: 0.5s;
         }
-        @keyframes gradientMove {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        .btn-modern:hover { background-position: right center; }
+        
+        /* Header Gradient */
+        .glass-header {
+            background: linear-gradient(135deg, #575761 0%, #648381 100%); /* Charcoal -> Deep Teal */
         }
     </style>
 </head>
-<body class="bg-stone-50 min-h-screen pb-12 selection:bg-amber-200 selection:text-emerald-900">
+<body class="pb-12">
 
-    <div id="loading-screen" class="fixed inset-0 bg-white/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
-        <div class="animate-spin rounded-full h-14 w-14 border-[5px] border-emerald-100 border-t-amber-500"></div>
-        <p class="mt-5 text-emerald-800 font-semibold animate-pulse" id="loading-text">กำลังเชื่อมต่อฐานข้อมูล...</p>
+    <div id="loading-screen" class="fixed inset-0 bg-[#e4fde1]/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
+        <div class="relative">
+            <div class="animate-spin rounded-full h-16 w-16 border-[4px] border-white border-t-[#ffbf46]"></div> <div class="absolute inset-0 flex items-center justify-center text-xl">🌿</div>
+        </div>
+        <p class="mt-4 text-[#575761] font-medium tracking-wide animate-pulse" id="loading-text">กำลังโหลดระบบ...</p>
     </div>
 
     <div id="app" class="max-w-xl mx-auto hidden">
         
-        <div class="bg-gradient-to-r from-emerald-800 via-green-700 to-amber-500 p-5 sticky top-0 z-20 shadow-xl rounded-b-3xl mb-6">
-            <div class="flex justify-between items-start">
+        <div class="glass-header p-6 rounded-b-[2.5rem] shadow-xl sticky top-0 z-20 mb-8">
+            <div class="flex justify-between items-center">
                 <div>
-                    <h1 class="text-white text-xl font-bold flex items-center gap-2 drop-shadow-sm">
-                        <span>🌿</span> ข่าวเกษตรกาญจน์
+                    <h1 class="text-[#e4fde1] text-xl font-bold flex items-center gap-2 drop-shadow-md">
+                        ข่าวเกษตรกาญจน์
                     </h1>
-                    <p class="text-emerald-50 text-xs mt-1 font-light opacity-90">ระบบรายงานผลการปฏิบัติงานอัจฉริยะ</p>
+                    <p class="text-[#8acb88] text-xs mt-0.5 font-light tracking-wider">ระบบรายงานผล V.Palette</p>
                 </div>
-                <div class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/30">
-                    <span class="text-[10px] text-white font-bold tracking-wider">V.GOLD</span>
+                <div class="bg-white/10 border border-white/20 rounded-full px-3 py-1 backdrop-blur-md">
+                    <span class="text-[10px] text-[#ffbf46] font-bold tracking-widest uppercase">Official</span>
                 </div>
             </div>
         </div>
 
         <form id="newsForm" class="px-5 space-y-6">
 
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-stone-100 space-y-5 relative overflow-hidden group hover:shadow-md transition duration-300">
-                <div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
-                
-                <div class="flex items-center gap-3 border-b border-stone-100 pb-3">
-                    <span class="flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 text-amber-700 font-bold text-sm shadow-sm ring-2 ring-white">1</span>
-                    <span class="text-emerald-900 font-bold text-lg">ข้อมูลพื้นฐาน</span>
+            <div class="bg-white rounded-2xl shadow-sm border-l-[6px] border-[#8acb88] p-6 relative group hover:shadow-lg transition-all duration-300">
+                <div class="flex items-center gap-3 mb-4 border-b border-[#e4fde1] pb-3">
+                    <div class="w-8 h-8 rounded-full bg-[#e4fde1] text-[#648381] flex items-center justify-center font-bold text-sm">1</div>
+                    <h3 class="text-[#575761] font-bold text-lg">ข้อมูลพื้นฐาน</h3>
                 </div>
 
                 <div class="grid grid-cols-1 gap-4">
                     <div>
-                        <label class="text-sm font-semibold text-stone-600 mb-1.5 block">📅 วันที่ปฏิบัติงาน</label>
-                        <input type="date" id="activity_date" class="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-amber-400 focus:border-amber-400 outline-none transition text-stone-700">
+                        <label class="text-xs font-bold text-[#648381] uppercase tracking-wide mb-1.5 block">วันที่ปฏิบัติงาน</label>
+                        <input type="date" id="activity_date" class="w-full px-4 py-3 bg-[#e4fde1]/30 border border-[#8acb88]/30 rounded-xl focus:ring-2 focus:ring-[#8acb88] focus:bg-white outline-none transition text-[#575761] font-medium">
                     </div>
                     <div>
-                        <label class="text-sm font-semibold text-stone-600 mb-1.5 block">📍 สถานที่จัดกิจกรรม</label>
-                        <input type="text" id="location" placeholder="ระบุสถานที่..." class="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-amber-400 focus:border-amber-400 outline-none transition text-stone-700 placeholder:text-stone-400">
+                        <label class="text-xs font-bold text-[#648381] uppercase tracking-wide mb-1.5 block">สถานที่</label>
+                        <input type="text" id="location" placeholder="ระบุสถานที่..." class="w-full px-4 py-3 bg-[#e4fde1]/30 border border-[#8acb88]/30 rounded-xl focus:ring-2 focus:ring-[#8acb88] focus:bg-white outline-none transition text-[#575761] placeholder:text-[#648381]/50">
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-stone-100 space-y-5 relative overflow-hidden group hover:shadow-md transition duration-300">
-                <div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
-
-                <div class="flex items-center gap-3 border-b border-stone-100 pb-3">
-                    <span class="flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 text-amber-700 font-bold text-sm shadow-sm ring-2 ring-white">2</span>
-                    <span class="text-emerald-900 font-bold text-lg">บทบาทเกษตรจังหวัด</span>
+            <div class="bg-white rounded-2xl shadow-sm border-l-[6px] border-[#ffbf46] p-6 relative group hover:shadow-lg transition-all duration-300">
+                <div class="flex items-center gap-3 mb-4 border-b border-[#e4fde1] pb-3">
+                    <div class="w-8 h-8 rounded-full bg-[#ffbf46]/20 text-[#ffbf46] flex items-center justify-center font-bold text-sm">2</div>
+                    <h3 class="text-[#575761] font-bold text-lg">เกษตรจังหวัด</h3>
                 </div>
 
                 <div class="space-y-4">
-                    <p class="text-sm text-stone-500 font-medium bg-emerald-50/50 p-2 rounded-lg border border-emerald-100">
-                        👤 ท่านเกษตรจังหวัด (นายเอนก ชื่นอารมณ์)
-                    </p>
+                    <div class="bg-[#e4fde1]/50 rounded-lg p-3 border border-[#8acb88]/30 flex items-center gap-2">
+                        <span class="text-xl">👤</span>
+                        <span class="text-sm text-[#575761] font-semibold">นายเอนก ชื่นอารมณ์</span>
+                    </div>
+
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <input type="radio" name="kaset_action" id="action_attend" value="attend" class="kaset-radio hidden" checked>
-                            <label for="action_attend" class="flex flex-col items-center justify-center p-4 border border-stone-200 rounded-xl cursor-pointer hover:bg-stone-50 transition h-full text-center">
-                                <span class="text-2xl mb-2 drop-shadow-sm">🙋‍♂️</span>
-                                <span class="text-sm font-bold text-stone-700">เป็นประธาน</span>
+                            <label for="action_attend" class="flex flex-col items-center justify-center p-4 border border-[#e4fde1] bg-[#f9fdf9] rounded-xl cursor-pointer hover:bg-[#e4fde1] transition h-full">
+                                <span class="text-2xl mb-1">🙋‍♂️</span>
+                                <span class="text-sm font-bold">เป็นประธาน</span>
                             </label>
                         </div>
                         <div>
                             <input type="radio" name="kaset_action" id="action_assign" value="assign" class="kaset-radio hidden">
-                            <label for="action_assign" class="flex flex-col items-center justify-center p-4 border border-stone-200 rounded-xl cursor-pointer hover:bg-stone-50 transition h-full text-center">
-                                <span class="text-2xl mb-2 drop-shadow-sm">👈</span>
-                                <span class="text-sm font-bold text-stone-700">มอบหมาย</span>
+                            <label for="action_assign" class="flex flex-col items-center justify-center p-4 border border-[#e4fde1] bg-[#f9fdf9] rounded-xl cursor-pointer hover:bg-[#e4fde1] transition h-full">
+                                <span class="text-2xl mb-1">👈</span>
+                                <span class="text-sm font-bold">มอบหมาย</span>
                             </label>
                         </div>
                         <div class="col-span-2">
                              <input type="radio" name="kaset_action" id="action_none" value="none" class="kaset-radio hidden">
-                             <label for="action_none" class="block text-center p-2.5 border border-stone-200 rounded-xl cursor-pointer hover:bg-stone-50 transition text-xs text-stone-400 font-medium">
+                             <label for="action_none" class="block text-center p-3 border border-dashed border-[#648381]/30 rounded-xl cursor-pointer hover:bg-[#e4fde1]/50 text-xs text-[#648381] hover:text-[#575761] transition">
                                 ❌ ไม่ต้องกล่าวถึงในข่าวนี้
                              </label>
                         </div>
@@ -123,99 +130,90 @@
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-stone-100 space-y-5 relative overflow-hidden group hover:shadow-md transition duration-300">
-                <div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
-
-                <div class="flex items-center gap-3 border-b border-stone-100 pb-3">
-                    <span class="flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 text-amber-700 font-bold text-sm shadow-sm ring-2 ring-white">3</span>
-                    <span class="text-emerald-900 font-bold text-lg">เจ้าของเรื่อง</span>
+            <div class="bg-white rounded-2xl shadow-sm border-l-[6px] border-[#648381] p-6 relative hover:shadow-lg transition-all duration-300">
+                <div class="flex items-center gap-3 mb-4 border-b border-[#e4fde1] pb-3">
+                    <div class="w-8 h-8 rounded-full bg-[#648381]/20 text-[#648381] flex items-center justify-center font-bold text-sm">3</div>
+                    <h3 class="text-[#575761] font-bold text-lg">เจ้าของเรื่อง</h3>
                 </div>
 
-                <div>
-                    <label class="text-sm font-semibold text-stone-600 mb-1.5 block">🏢 สังกัดหน่วยงาน</label>
-                    <div class="relative">
-                        <select id="source_type" class="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-amber-400 outline-none appearance-none text-stone-700 font-medium">
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs font-bold text-[#648381] uppercase tracking-wide mb-1.5 block">สังกัด</label>
+                        <select id="source_type" class="w-full px-4 py-3 bg-[#e4fde1]/30 border border-[#8acb88]/30 rounded-xl focus:ring-2 focus:ring-[#648381] outline-none text-[#575761] font-medium">
                             <option value="province">สำนักงานเกษตรจังหวัด</option>
                             <option value="district">สำนักงานเกษตรอำเภอ</option>
                         </select>
-                        <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-stone-500">▼</div>
                     </div>
-                </div>
 
-                <div id="group_container" class="animate-fade-in">
-                    <label class="text-sm font-semibold text-stone-600 mb-1.5 block">📂 กลุ่ม/ฝ่าย</label>
-                    <select id="group_name" class="w-full px-4 py-2.5 bg-white border border-emerald-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-emerald-800 font-medium"></select>
-                </div>
-                
-                <div id="district_container" class="hidden animate-fade-in">
-                    <label class="text-sm font-semibold text-stone-600 mb-1.5 block">📍 อำเภอ</label>
-                    <select id="district_name" class="w-full px-4 py-2.5 bg-white border border-stone-200 rounded-xl focus:ring-2 focus:ring-amber-400 outline-none text-stone-700"></select>
-                </div>
+                    <div id="group_container" class="animate-fade-in">
+                        <label class="text-xs font-bold text-[#648381] uppercase tracking-wide mb-1.5 block">กลุ่ม/ฝ่าย</label>
+                        <select id="group_name" class="w-full px-4 py-3 bg-white border border-[#648381]/30 rounded-xl focus:ring-2 focus:ring-[#8acb88] outline-none text-[#575761] font-medium shadow-sm"></select>
+                    </div>
+                    
+                    <div id="district_container" class="hidden animate-fade-in">
+                        <label class="text-xs font-bold text-[#648381] uppercase tracking-wide mb-1.5 block">อำเภอ</label>
+                        <select id="district_name" class="w-full px-4 py-3 bg-white border border-[#648381]/30 rounded-xl focus:ring-2 focus:ring-[#8acb88] outline-none text-[#575761] shadow-sm"></select>
+                    </div>
 
-                <div class="bg-amber-50/60 p-4 rounded-xl border border-amber-100">
-                    <label class="text-sm font-bold text-amber-800 mb-1.5 block flex items-center gap-1">
-                        ⭐ หัวหน้าคณะ <span class="text-[10px] font-normal text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-md">สำคัญ</span>
-                    </label>
-                    <select id="head_officer_select" class="w-full px-3 py-2 bg-white border border-amber-200 rounded-lg text-stone-800 text-sm focus:ring-2 focus:ring-amber-400 outline-none">
-                    </select>
+                    <div class="p-4 bg-[#ffbf46]/10 rounded-xl border border-[#ffbf46]/30">
+                        <label class="text-sm font-bold text-[#575761] mb-2 block flex items-center gap-1">
+                            ⭐ หัวหน้าคณะ <span class="text-[10px] font-normal bg-[#ffbf46] text-white px-2 py-0.5 rounded-full shadow-sm ml-auto">VIP</span>
+                        </label>
+                        <select id="head_officer_select" class="w-full px-3 py-2 bg-white border border-[#ffbf46] rounded-lg text-[#575761] text-sm focus:ring-2 focus:ring-[#ffbf46] outline-none">
+                        </select>
+                    </div>
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-stone-100 space-y-4 relative overflow-hidden group hover:shadow-md transition duration-300">
-                <div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
-
-                <div class="flex items-center justify-between border-b border-stone-100 pb-3">
+            <div class="bg-white rounded-2xl shadow-sm border-l-[6px] border-[#8acb88] p-6 relative hover:shadow-lg transition-all duration-300">
+                <div class="flex items-center justify-between mb-4 border-b border-[#e4fde1] pb-3">
                     <div class="flex items-center gap-3">
-                        <span class="flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 text-amber-700 font-bold text-sm shadow-sm ring-2 ring-white">4</span>
-                        <span class="text-emerald-900 font-bold text-lg">ผู้ร่วมคณะ</span>
+                        <div class="w-8 h-8 rounded-full bg-[#8acb88]/20 text-[#8acb88] flex items-center justify-center font-bold text-sm">4</div>
+                        <h3 class="text-[#575761] font-bold text-lg">ผู้ร่วมคณะ</h3>
                     </div>
-                    <span id="selected_count" class="text-[10px] font-bold bg-orange-100 text-orange-700 px-2 py-1 rounded-full border border-orange-200 shadow-sm">เลือก 0 คน</span>
+                    <span id="selected_count" class="text-[10px] font-bold bg-[#ffbf46] text-white px-2 py-1 rounded-full shadow-sm">0 คน</span>
                 </div>
 
-                <div id="selected_summary_container" class="hidden p-3 bg-stone-50 rounded-xl border border-stone-200 mb-2 animate-fade-in">
+                <div id="selected_summary_container" class="hidden p-3 bg-[#e4fde1] rounded-xl border border-[#8acb88]/30 mb-3 animate-fade-in">
                     <div id="selected_chips" class="flex flex-wrap gap-2"></div>
                 </div>
 
-                <div class="flex gap-2">
+                <div class="flex gap-2 mb-3">
                     <div class="w-1/3">
-                        <select id="officer_group_filter" class="w-full px-2 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-400 outline-none text-stone-600">
+                        <select id="officer_group_filter" class="w-full px-2 py-2.5 bg-[#f9fdf9] border border-[#648381]/20 rounded-xl text-xs focus:ring-2 focus:ring-[#8acb88] outline-none text-[#575761]">
                             <option value="ALL">ทั้งหมด</option>
                         </select>
                     </div>
                     <div class="w-2/3 relative">
-                        <input type="text" id="officer_search" placeholder="🔍 ค้นหาชื่อ..." class="w-full pl-8 pr-3 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-400 outline-none">
-                        <span class="absolute left-3 top-2.5 text-stone-400 text-sm">🔎</span>
+                        <input type="text" id="officer_search" placeholder="ค้นหาชื่อ..." class="w-full pl-9 pr-3 py-2.5 bg-[#f9fdf9] border border-[#648381]/20 rounded-xl text-sm focus:ring-2 focus:ring-[#8acb88] outline-none text-[#575761]">
+                        <span class="absolute left-3 top-2.5 text-[#648381]">🔍</span>
                     </div>
                 </div>
                 
-                <div id="officer_list" class="h-64 overflow-y-auto border border-stone-100 rounded-xl p-2 space-y-1.5 bg-white scroll-smooth shadow-inner"></div>
+                <div id="officer_list" class="h-60 overflow-y-auto border border-[#e4fde1] rounded-xl p-2 space-y-2 bg-[#f9fdf9] scroll-smooth shadow-inner"></div>
 
-                <label class="flex items-start space-x-3 p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl cursor-pointer hover:bg-emerald-100/50 transition">
-                    <input type="checkbox" id="use_generic_term" class="mt-1 h-5 w-5 text-emerald-600 rounded focus:ring-emerald-500 border-emerald-300">
+                <label class="flex items-center gap-3 p-3 mt-3 bg-[#e4fde1]/50 rounded-xl cursor-pointer hover:bg-[#e4fde1] transition border border-transparent hover:border-[#8acb88]/30">
+                    <input type="checkbox" id="use_generic_term" class="h-5 w-5 text-[#8acb88] rounded focus:ring-[#8acb88] border-[#648381]/30">
                     <div>
-                        <span class="block text-sm font-bold text-emerald-900">ใช้คำว่า "พร้อมด้วยเจ้าหน้าที่"</span>
-                        <span class="block text-xs text-emerald-600 font-medium">*ระบบติ๊กให้อัตโนมัติ (เมื่อ > 3 คน)</span>
+                        <span class="block text-sm font-bold text-[#575761]">ใช้คำว่า "พร้อมด้วยเจ้าหน้าที่"</span>
+                        <span class="block text-[10px] text-[#648381]">*ระบบติ๊กอัตโนมัติเมื่อ > 3 คน</span>
                     </div>
                 </label>
             </div>
 
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-stone-100 space-y-5 relative overflow-hidden group hover:shadow-md transition duration-300">
-                <div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
-
-                <div class="flex items-center gap-3 border-b border-stone-100 pb-3">
-                    <span class="flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 text-amber-700 font-bold text-sm shadow-sm ring-2 ring-white">5</span>
-                    <span class="text-emerald-900 font-bold text-lg">รายละเอียด & รูปภาพ</span>
+            <div class="bg-white rounded-2xl shadow-sm border-l-[6px] border-[#ffbf46] p-6 relative hover:shadow-lg transition-all duration-300">
+                <div class="flex items-center gap-3 mb-4 border-b border-[#e4fde1] pb-3">
+                    <div class="w-8 h-8 rounded-full bg-[#ffbf46]/20 text-[#ffbf46] flex items-center justify-center font-bold text-sm">5</div>
+                    <h3 class="text-[#575761] font-bold text-lg">เนื้อหา & รูปภาพ</h3>
                 </div>
                 
-                <textarea id="summary" rows="5" required placeholder="📝 สรุปประเด็นข่าว: ทำอะไร ที่ไหน เพื่ออะไร ผลลัพธ์เป็นอย่างไร..." class="w-full p-4 border border-stone-200 rounded-2xl focus:ring-2 focus:ring-amber-400 focus:border-amber-400 outline-none text-stone-700 bg-stone-50 placeholder:text-stone-400 shadow-inner"></textarea>
+                <textarea id="summary" rows="5" required placeholder="📝 สรุปประเด็นสำคัญ..." class="w-full p-4 border border-[#8acb88]/30 rounded-2xl focus:ring-2 focus:ring-[#ffbf46] outline-none text-[#575761] bg-[#f9fdf9] placeholder:text-[#648381]/50 shadow-inner mb-4"></textarea>
                 
                 <div>
-                    <label class="block text-sm font-semibold text-stone-600 mb-2">📸 รูปภาพประกอบ</label>
-                    <label class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-emerald-200 rounded-2xl cursor-pointer bg-emerald-50/30 hover:bg-emerald-50 hover:border-emerald-400 transition relative overflow-hidden group">
-                        <div class="flex flex-col items-center justify-center pt-5 pb-6 text-emerald-400 group-hover:text-emerald-600 transition">
-                            <svg class="w-10 h-10 mb-2 transform group-hover:scale-110 transition duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                            <p class="text-sm font-medium">แตะเพื่อเลือกรูปภาพ</p>
-                            <p class="text-xs opacity-70 mt-1">รองรับหลายรูปภาพ</p>
+                    <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[#ffbf46]/50 rounded-2xl cursor-pointer bg-[#ffbf46]/5 hover:bg-[#ffbf46]/10 hover:border-[#ffbf46] transition group">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6 text-[#ffbf46] group-hover:text-[#e0a025] transition">
+                            <svg class="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            <p class="text-sm font-medium">เพิ่มรูปภาพประกอบ</p>
                         </div>
                         <input type="file" id="images" multiple accept="image/*" class="hidden" />
                     </label>
@@ -224,16 +222,13 @@
             </div>
 
             <div class="pt-4 pb-8 sticky bottom-0 z-10">
-                <div class="absolute inset-0 bg-gradient-to-t from-stone-50 via-stone-50/90 to-transparent -z-10 h-full pointer-events-none"></div>
-                <button type="submit" id="submit_btn" class="w-full py-4 bg-gradient-to-r from-emerald-600 via-green-600 to-orange-500 text-white rounded-2xl font-bold text-lg shadow-lg shadow-emerald-200 hover:shadow-xl hover:shadow-orange-200 hover:scale-[1.02] transition-all duration-300 transform active:scale-95 disabled:opacity-75 disabled:cursor-not-allowed disabled:scale-100 flex items-center justify-center gap-2">
-                    <span>🚀</span> <span id="btn_text">ส่งข้อมูลให้ AI เขียนข่าว</span>
+                <div class="absolute inset-0 bg-gradient-to-t from-[#e4fde1] via-[#e4fde1]/90 to-transparent -z-10 h-full pointer-events-none"></div>
+                <button type="submit" id="submit_btn" class="w-full py-4 bg-gradient-to-r from-[#8acb88] to-[#ffbf46] text-[#575761] rounded-2xl font-bold text-lg shadow-lg shadow-[#8acb88]/40 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 btn-modern flex items-center justify-center gap-2 border border-[#fff]/20">
+                    <span>🚀</span> <span id="btn_text">ส่งข้อมูลให้ AI ประมวลผล</span>
                 </button>
             </div>
             
-            <div class="text-center pb-8 space-y-1">
-                <p class="text-xs text-stone-400 font-light tracking-wide">สำนักงานเกษตรจังหวัดกาญจนบุรี</p>
-                <div class="w-12 h-1 bg-gradient-to-r from-emerald-200 to-amber-200 mx-auto rounded-full"></div>
-            </div>
+            <p class="text-center text-xs text-[#648381] pb-8 opacity-70">สำนักงานเกษตรจังหวัดกาญจนบุรี</p>
         </form>
     </div>
 
@@ -344,29 +339,30 @@
             const sortedList = list.sort((a, b) => (a.is_head === b.is_head) ? 0 : a.is_head ? -1 : 1);
 
             if(sortedList.length === 0) {
-                 div.innerHTML = '<div class="text-center text-stone-400 p-8 text-sm">ไม่พบรายชื่อในกลุ่มนี้</div>';
+                 div.innerHTML = '<div class="text-center text-[#648381]/70 p-8 text-sm">ไม่พบรายชื่อในกลุ่มนี้</div>';
                  return;
             }
 
             sortedList.forEach((o) => {
                 const uid = `off_${Math.random().toString(36).substr(2,9)}`;
                 const isChecked = selectedOfficersMap.has(o.name);
-                // Style สำหรับหัวหน้า (ทอง) vs ลูกน้อง (ปกติ)
-                const bgClass = o.is_head ? "bg-amber-50 border-amber-200 shadow-sm" : "bg-white hover:bg-stone-50 border-stone-100";
-                const headBadge = o.is_head ? '<span class="text-[9px] bg-amber-400 text-white px-1.5 py-0.5 rounded shadow-sm ml-2 tracking-wide">หัวหน้า</span>' : '';
+                
+                // Style for Head (Gold Accent) vs Staff (Green/Teal)
+                const bgClass = o.is_head ? "bg-[#ffbf46]/10 border-[#ffbf46]/30" : "bg-white hover:bg-[#e4fde1]/30 border-[#648381]/10";
+                const headBadge = o.is_head ? '<span class="text-[9px] bg-[#ffbf46] text-white px-1.5 py-0.5 rounded shadow-sm ml-2 tracking-wide uppercase">หัวหน้า</span>' : '';
                 
                 div.innerHTML += `
                     <div class="flex items-center gap-3 p-3 rounded-xl border ${bgClass} transition mb-2">
                         <input type="checkbox" id="${uid}" 
                             value='${JSON.stringify({name:o.name, position:o.position})}' 
-                            class="chk-officer h-5 w-5 text-emerald-600 rounded focus:ring-emerald-500 border-stone-300 cursor-pointer"
+                            class="chk-officer h-5 w-5 text-[#8acb88] rounded focus:ring-[#8acb88] border-[#648381]/30 cursor-pointer"
                             ${isChecked ? 'checked' : ''}
                             onchange="toggleOfficer(this)">
                         <label for="${uid}" class="text-sm cursor-pointer w-full select-none">
-                            <div class="font-bold text-stone-800 flex items-center">
+                            <div class="font-bold text-[#575761] flex items-center">
                                 ${o.name} ${headBadge}
                             </div>
-                            <div class="text-xs text-stone-500 mt-0.5 font-light">${o.position}</div>
+                            <div class="text-xs text-[#648381]/80 mt-0.5 font-light">${o.position}</div>
                         </label>
                     </div>`;
             });
@@ -389,9 +385,9 @@
                 container.classList.remove('hidden');
                 selectedOfficersMap.forEach((val, key) => {
                     chipsDiv.innerHTML += `
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200 animate-fade-in shadow-sm">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-[#8acb88] text-white animate-fade-in shadow-sm">
                             ${key}
-                            <button type="button" onclick="removeOfficer('${key}')" class="ml-1.5 text-emerald-600 hover:text-emerald-900 font-bold bg-white/50 rounded-full w-4 h-4 flex items-center justify-center">×</button>
+                            <button type="button" onclick="removeOfficer('${key}')" class="ml-1.5 text-[#575761] hover:text-white font-bold bg-white/30 rounded-full w-4 h-4 flex items-center justify-center">×</button>
                         </span>`;
                 });
             } else container.classList.add('hidden');
@@ -437,7 +433,7 @@
             const newFiles = Array.from(e.target.files);
             const pv = document.getElementById('image_preview');
             const loadingId = 'loading-' + Date.now();
-            pv.innerHTML += `<div id="${loadingId}" class="text-xs text-amber-600 col-span-3 text-center py-4 bg-amber-50 rounded-xl animate-pulse border border-amber-100">⚡ กำลังบีบอัดรูปภาพ...</div>`;
+            pv.innerHTML += `<div id="${loadingId}" class="text-xs text-[#648381] col-span-3 text-center py-4 bg-[#e4fde1] rounded-xl animate-pulse border border-[#8acb88]/30">⚡ กำลังบีบอัดรูปภาพ...</div>`;
 
             for (let file of newFiles) {
                 try {
@@ -450,8 +446,8 @@
                         const i = files.length - 1;
                         pv.innerHTML += `
                             <div class="relative group animate-fade-in">
-                                <img src="${ev.target.result}" class="w-full h-24 object-cover rounded-xl border border-stone-200 shadow-sm">
-                                <button type="button" onclick="rmImg(${i})" class="absolute -top-2 -right-2 bg-rose-500 text-white w-6 h-6 rounded-full text-xs shadow-md hover:scale-110 transition border-2 border-white">✕</button>
+                                <img src="${ev.target.result}" class="w-full h-24 object-cover rounded-xl border border-[#648381]/20 shadow-sm">
+                                <button type="button" onclick="rmImg(${i})" class="absolute -top-2 -right-2 bg-[#ffbf46] text-[#575761] w-6 h-6 rounded-full text-xs shadow-md hover:scale-110 transition border-2 border-white font-bold">✕</button>
                             </div>`;
                     };
                     reader.readAsDataURL(resizedFile);
@@ -468,8 +464,8 @@
                 r.onload = (ev) => {
                     pv.innerHTML += `
                         <div class="relative group animate-fade-in">
-                            <img src="${ev.target.result}" class="w-full h-24 object-cover rounded-xl border border-stone-200 shadow-sm">
-                            <button type="button" onclick="rmImg(${i})" class="absolute -top-2 -right-2 bg-rose-500 text-white w-6 h-6 rounded-full text-xs shadow-md hover:scale-110 transition border-2 border-white">✕</button>
+                            <img src="${ev.target.result}" class="w-full h-24 object-cover rounded-xl border border-[#648381]/20 shadow-sm">
+                            <button type="button" onclick="rmImg(${i})" class="absolute -top-2 -right-2 bg-[#ffbf46] text-[#575761] w-6 h-6 rounded-full text-xs shadow-md hover:scale-110 transition border-2 border-white font-bold">✕</button>
                         </div>`;
                 }
                 r.readAsDataURL(f);
@@ -511,7 +507,7 @@
             if(files.length === 0) return alert('📸 กรุณาใส่รูปภาพประกอบอย่างน้อย 1 รูปครับ');
 
             btn.disabled = true;
-            btn.classList.add('btn-progress', 'from-emerald-500', 'to-orange-400');
+            btn.classList.add('btn-modern', 'from-[#8acb88]', 'to-[#ffbf46]');
             
             try {
                 const urls = [];
@@ -569,7 +565,7 @@
                 console.error(err);
                 alert('เกิดข้อผิดพลาด: ' + err.message);
                 btn.disabled = false;
-                btn.classList.remove('btn-progress');
+                btn.classList.remove('btn-modern');
                 btnText.innerHTML = 'ลองใหม่อีกครั้ง';
             }
         });
