@@ -14,57 +14,44 @@
             background-color: #e4fde1; /* Frosted Mint */
             color: #575761; /* Charcoal */
         }
-        
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #648381; border-radius: 10px; } /* Deep Teal */
-        
-        /* Animations */
+        ::-webkit-scrollbar-thumb { background: #648381; border-radius: 10px; }
         .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* Modern Radio Input */
         .kaset-radio:checked + label {
             background: #fff;
-            border-color: #8acb88; /* Willow Green */
-            color: #575761; /* Charcoal */
+            border-color: #8acb88;
+            color: #575761;
             box-shadow: 0 4px 6px -1px rgba(138, 203, 136, 0.4);
             transform: translateY(-2px);
             ring: 2px solid #8acb88;
         }
-
-        /* Gradient Button Animation */
-        .btn-modern {
-            background-size: 200% auto;
-            transition: 0.5s;
-        }
+        .btn-modern { background-size: 200% auto; transition: 0.5s; }
         .btn-modern:hover { background-position: right center; }
-        
-        /* Header Gradient */
-        .glass-header {
-            background: linear-gradient(135deg, #575761 0%, #648381 100%); /* Charcoal -> Deep Teal */
-        }
+        .glass-header { background: linear-gradient(135deg, #575761 0%, #648381 100%); }
     </style>
 </head>
 <body class="pb-12">
 
     <div id="loading-screen" class="fixed inset-0 bg-[#e4fde1]/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
         <div class="relative">
-            <div class="animate-spin rounded-full h-16 w-16 border-[4px] border-white border-t-[#ffbf46]"></div> <div class="absolute inset-0 flex items-center justify-center text-xl">🌿</div>
+            <div class="animate-spin rounded-full h-16 w-16 border-[4px] border-white border-t-[#ffbf46]"></div>
+            <div class="absolute inset-0 flex items-center justify-center text-xl">🌿</div>
         </div>
         <p class="mt-4 text-[#575761] font-medium tracking-wide animate-pulse" id="loading-text">กำลังโหลดระบบ...</p>
     </div>
 
     <div id="app" class="max-w-xl mx-auto hidden">
-        
         <div class="glass-header p-6 rounded-b-[2.5rem] shadow-xl sticky top-0 z-20 mb-8">
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-[#e4fde1] text-xl font-bold flex items-center gap-2 drop-shadow-md">
                         ข่าวเกษตรกาญจน์
                     </h1>
-                    <p class="text-[#8acb88] text-xs mt-0.5 font-light tracking-wider">ระบบรายงานผล V.Palette</p>
+                    <p class="text-[#8acb88] text-xs mt-0.5 font-light tracking-wider">ระบบรายงานผล V.Full-Options</p>
                 </div>
                 <div class="bg-white/10 border border-white/20 rounded-full px-3 py-1 backdrop-blur-md">
                     <span class="text-[10px] text-[#ffbf46] font-bold tracking-widest uppercase">Official</span>
@@ -74,12 +61,11 @@
 
         <form id="newsForm" class="px-5 space-y-6">
 
-            <div class="bg-white rounded-2xl shadow-sm border-l-[6px] border-[#8acb88] p-6 relative group hover:shadow-lg transition-all duration-300">
+            <div class="bg-white rounded-2xl shadow-sm border-l-[6px] border-[#8acb88] p-6 relative hover:shadow-lg transition-all duration-300">
                 <div class="flex items-center gap-3 mb-4 border-b border-[#e4fde1] pb-3">
                     <div class="w-8 h-8 rounded-full bg-[#e4fde1] text-[#648381] flex items-center justify-center font-bold text-sm">1</div>
                     <h3 class="text-[#575761] font-bold text-lg">ข้อมูลพื้นฐาน</h3>
                 </div>
-
                 <div class="grid grid-cols-1 gap-4">
                     <div>
                         <label class="text-xs font-bold text-[#648381] uppercase tracking-wide mb-1.5 block">วันที่ปฏิบัติงาน</label>
@@ -105,28 +91,57 @@
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <input type="radio" name="kaset_action" id="action_attend" value="attend" class="kaset-radio hidden" checked>
-                            <label for="action_attend" class="flex flex-col items-center justify-center p-4 border border-[#e4fde1] bg-[#f9fdf9] rounded-xl cursor-pointer hover:bg-[#e4fde1] transition h-full">
-                                <span class="text-2xl mb-1">🙋‍♂️</span>
-                                <span class="text-sm font-bold">เป็นประธาน</span>
+                        <div class="col-span-1">
+                            <input type="radio" name="kaset_action" id="action_chair" value="chair" class="kaset-radio hidden" checked>
+                            <label for="action_chair" class="flex flex-col items-center justify-center p-3 border border-[#e4fde1] bg-[#f9fdf9] rounded-xl cursor-pointer hover:bg-[#e4fde1] transition h-full text-center">
+                                <span class="text-xl mb-1">👑</span>
+                                <span class="text-xs font-bold">เป็นประธาน<br>ลงพื้นที่</span>
                             </label>
                         </div>
-                        <div>
+                        
+                        <div class="col-span-1">
                             <input type="radio" name="kaset_action" id="action_assign" value="assign" class="kaset-radio hidden">
-                            <label for="action_assign" class="flex flex-col items-center justify-center p-4 border border-[#e4fde1] bg-[#f9fdf9] rounded-xl cursor-pointer hover:bg-[#e4fde1] transition h-full">
-                                <span class="text-2xl mb-1">👈</span>
-                                <span class="text-sm font-bold">มอบหมาย</span>
+                            <label for="action_assign" class="flex flex-col items-center justify-center p-3 border border-[#e4fde1] bg-[#f9fdf9] rounded-xl cursor-pointer hover:bg-[#e4fde1] transition h-full text-center">
+                                <span class="text-xl mb-1">👈</span>
+                                <span class="text-xs font-bold">มอบหมาย</span>
                             </label>
                         </div>
-                        <div class="col-span-2">
-                             <input type="radio" name="kaset_action" id="action_none" value="none" class="kaset-radio hidden">
-                             <label for="action_none" class="block text-center p-3 border border-dashed border-[#648381]/30 rounded-xl cursor-pointer hover:bg-[#e4fde1]/50 text-xs text-[#648381] hover:text-[#575761] transition">
-                                ❌ ไม่ต้องกล่าวถึงในข่าวนี้
-                             </label>
+
+                        <div class="col-span-1">
+                            <input type="radio" name="kaset_action" id="action_join_solo" value="join_solo" class="kaset-radio hidden">
+                            <label for="action_join_solo" class="flex flex-col items-center justify-center p-3 border border-[#e4fde1] bg-[#f9fdf9] rounded-xl cursor-pointer hover:bg-[#e4fde1] transition h-full text-center">
+                                <span class="text-xl mb-1">🙋‍♂️</span>
+                                <span class="text-xs font-bold">เข้าร่วม<br>(ส่วนตัว)</span>
+                            </label>
                         </div>
+
+                        <div class="col-span-1">
+                            <input type="radio" name="kaset_action" id="action_report" value="report" class="kaset-radio hidden">
+                            <label for="action_report" class="flex flex-col items-center justify-center p-3 border border-[#e4fde1] bg-[#f9fdf9] rounded-xl cursor-pointer hover:bg-[#e4fde1] transition h-full text-center">
+                                <span class="text-xl mb-1">🎤</span>
+                                <span class="text-xs font-bold">กล่าวรายงาน<br>จัดงาน</span>
+                            </label>
+                        </div>
+
+                        <div class="col-span-2">
+                            <input type="radio" name="kaset_action" id="action_lead_join" value="lead_join" class="kaset-radio hidden">
+                            <label for="action_lead_join" class="flex flex-col items-center justify-center p-3 border border-[#e4fde1] bg-[#f9fdf9] rounded-xl cursor-pointer hover:bg-[#e4fde1] transition h-full text-center">
+                                <span class="text-xl mb-1">👥</span>
+                                <span class="text-xs font-bold">นำทีมเจ้าหน้าที่เข้าร่วม (มีผู้อื่นเป็นประธาน)</span>
+                            </label>
+                        </div>
+                         <div class="col-span-2">
+                            <input type="radio" name="kaset_action" id="action_none" value="none" class="kaset-radio hidden">
+                            <label for="action_none" class="block text-center p-2 border border-dashed border-[#648381]/30 rounded-xl cursor-pointer hover:bg-[#e4fde1]/50 text-xs text-[#648381] hover:text-[#575761] transition">
+                               ❌ ไม่ต้องกล่าวถึงในข่าวนี้
+                            </label>
+                       </div>
                     </div>
                     <input type="text" id="kaset_name" value="นายเอนก ชื่นอารมณ์" class="hidden">
+                    
+                    <p class="text-[10px] text-[#ffbf46] bg-[#ffbf46]/10 p-2 rounded border border-[#ffbf46]/20">
+                        💡 หากเลือก <b>เข้าร่วม/กล่าวรายงาน/นำทีม</b> กรุณาระบุชื่อ "ประธานในพิธี" หรือ "ผู้กล่าวต้อนรับ" ลงในช่องเนื้อหาข่าวด้วย
+                    </p>
                 </div>
             </div>
 
@@ -135,7 +150,6 @@
                     <div class="w-8 h-8 rounded-full bg-[#648381]/20 text-[#648381] flex items-center justify-center font-bold text-sm">3</div>
                     <h3 class="text-[#575761] font-bold text-lg">เจ้าของเรื่อง</h3>
                 </div>
-
                 <div class="space-y-4">
                     <div>
                         <label class="text-xs font-bold text-[#648381] uppercase tracking-wide mb-1.5 block">สังกัด</label>
@@ -144,23 +158,19 @@
                             <option value="district">สำนักงานเกษตรอำเภอ</option>
                         </select>
                     </div>
-
                     <div id="group_container" class="animate-fade-in">
                         <label class="text-xs font-bold text-[#648381] uppercase tracking-wide mb-1.5 block">กลุ่ม/ฝ่าย</label>
                         <select id="group_name" class="w-full px-4 py-3 bg-white border border-[#648381]/30 rounded-xl focus:ring-2 focus:ring-[#8acb88] outline-none text-[#575761] font-medium shadow-sm"></select>
                     </div>
-                    
                     <div id="district_container" class="hidden animate-fade-in">
                         <label class="text-xs font-bold text-[#648381] uppercase tracking-wide mb-1.5 block">อำเภอ</label>
                         <select id="district_name" class="w-full px-4 py-3 bg-white border border-[#648381]/30 rounded-xl focus:ring-2 focus:ring-[#8acb88] outline-none text-[#575761] shadow-sm"></select>
                     </div>
-
                     <div class="p-4 bg-[#ffbf46]/10 rounded-xl border border-[#ffbf46]/30">
                         <label class="text-sm font-bold text-[#575761] mb-2 block flex items-center gap-1">
                             ⭐ หัวหน้าคณะ <span class="text-[10px] font-normal bg-[#ffbf46] text-white px-2 py-0.5 rounded-full shadow-sm ml-auto">VIP</span>
                         </label>
-                        <select id="head_officer_select" class="w-full px-3 py-2 bg-white border border-[#ffbf46] rounded-lg text-[#575761] text-sm focus:ring-2 focus:ring-[#ffbf46] outline-none">
-                        </select>
+                        <select id="head_officer_select" class="w-full px-3 py-2 bg-white border border-[#ffbf46] rounded-lg text-[#575761] text-sm focus:ring-2 focus:ring-[#ffbf46] outline-none"></select>
                     </div>
                 </div>
             </div>
@@ -173,11 +183,9 @@
                     </div>
                     <span id="selected_count" class="text-[10px] font-bold bg-[#ffbf46] text-white px-2 py-1 rounded-full shadow-sm">0 คน</span>
                 </div>
-
                 <div id="selected_summary_container" class="hidden p-3 bg-[#e4fde1] rounded-xl border border-[#8acb88]/30 mb-3 animate-fade-in">
                     <div id="selected_chips" class="flex flex-wrap gap-2"></div>
                 </div>
-
                 <div class="flex gap-2 mb-3">
                     <div class="w-1/3">
                         <select id="officer_group_filter" class="w-full px-2 py-2.5 bg-[#f9fdf9] border border-[#648381]/20 rounded-xl text-xs focus:ring-2 focus:ring-[#8acb88] outline-none text-[#575761]">
@@ -189,9 +197,7 @@
                         <span class="absolute left-3 top-2.5 text-[#648381]">🔍</span>
                     </div>
                 </div>
-                
                 <div id="officer_list" class="h-60 overflow-y-auto border border-[#e4fde1] rounded-xl p-2 space-y-2 bg-[#f9fdf9] scroll-smooth shadow-inner"></div>
-
                 <label class="flex items-center gap-3 p-3 mt-3 bg-[#e4fde1]/50 rounded-xl cursor-pointer hover:bg-[#e4fde1] transition border border-transparent hover:border-[#8acb88]/30">
                     <input type="checkbox" id="use_generic_term" class="h-5 w-5 text-[#8acb88] rounded focus:ring-[#8acb88] border-[#648381]/30">
                     <div>
@@ -206,9 +212,8 @@
                     <div class="w-8 h-8 rounded-full bg-[#ffbf46]/20 text-[#ffbf46] flex items-center justify-center font-bold text-sm">5</div>
                     <h3 class="text-[#575761] font-bold text-lg">เนื้อหา & รูปภาพ</h3>
                 </div>
-                
-                <textarea id="summary" rows="5" required placeholder="📝 สรุปประเด็นสำคัญ..." class="w-full p-4 border border-[#8acb88]/30 rounded-2xl focus:ring-2 focus:ring-[#ffbf46] outline-none text-[#575761] bg-[#f9fdf9] placeholder:text-[#648381]/50 shadow-inner mb-4"></textarea>
-                
+                <textarea id="summary" rows="6" required placeholder="📝 สรุปประเด็นสำคัญ...
+(⚠️ หากเลือก เข้าร่วม/กล่าวรายงาน โปรดระบุชื่อประธานในพิธีที่นี่ด้วย)" class="w-full p-4 border border-[#8acb88]/30 rounded-2xl focus:ring-2 focus:ring-[#ffbf46] outline-none text-[#575761] bg-[#f9fdf9] placeholder:text-[#648381]/50 shadow-inner mb-4"></textarea>
                 <div>
                     <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[#ffbf46]/50 rounded-2xl cursor-pointer bg-[#ffbf46]/5 hover:bg-[#ffbf46]/10 hover:border-[#ffbf46] transition group">
                         <div class="flex flex-col items-center justify-center pt-5 pb-6 text-[#ffbf46] group-hover:text-[#e0a025] transition">
@@ -346,8 +351,6 @@
             sortedList.forEach((o) => {
                 const uid = `off_${Math.random().toString(36).substr(2,9)}`;
                 const isChecked = selectedOfficersMap.has(o.name);
-                
-                // Style for Head (Gold Accent) vs Staff (Green/Teal)
                 const bgClass = o.is_head ? "bg-[#ffbf46]/10 border-[#ffbf46]/30" : "bg-white hover:bg-[#e4fde1]/30 border-[#648381]/10";
                 const headBadge = o.is_head ? '<span class="text-[9px] bg-[#ffbf46] text-white px-1.5 py-0.5 rounded shadow-sm ml-2 tracking-wide uppercase">หัวหน้า</span>' : '';
                 
