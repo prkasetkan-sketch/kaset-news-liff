@@ -268,6 +268,9 @@ const getType = () => { const r = document.querySelector('input[name="post_type"
       else liff.login();
     } catch (e) { console.warn('Dev Mode', e); }
 
+    // เปิดจากปุ่ม "เริ่มใหม่ทั้งหมด" ใน LINE (?restart=1&draft=...) → ลบร่างเดิมออกจากระบบ แล้วแสดงฟอร์มเปล่าทันที (ไม่รอผลลบ)
+    if (getParam('restart') === '1' && getParam('draft')) discardDraft();
+
     // เปิดจากปุ่ม "แก้ไขข้อความ" ใน LINE → โหมดแก้ไขร่างข่าวที่ AI เขียน (ไม่ต้องโหลดรายชื่อเจ้าหน้าที่)
     if (getParam('mode') === 'edit') { await enterEditMode(); return; }
 
@@ -320,6 +323,12 @@ async function editApi(action, extra = {}) {
     if (e.name === 'AbortError') throw new Error('การเชื่อมต่อใช้เวลานานเกินไป กรุณาลองใหม่');
     throw e;
   } finally { clearTimeout(timer); }
+}
+
+// ลบร่างเดิมใน Make (action=discard) ตรวจสิทธิ์ด้วย LINE access token เหมือนโหมดแก้ไข ล้มเหลวได้โดยไม่กระทบการเปิดฟอร์ม
+async function discardDraft() {
+  try { await editApi('discard', { draft: getParam('draft') || '' }); }
+  catch (e) { console.warn('discard draft failed', e); }
 }
 
 async function enterEditMode() {
