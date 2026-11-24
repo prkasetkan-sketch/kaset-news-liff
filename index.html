@@ -643,6 +643,13 @@ $('newsForm').addEventListener('submit', async (e) => {
   if (files.length === 0) return alert('📸 กรุณาใส่รูปภาพประกอบอย่างน้อย 1 รูปครับ');
   if (files.length > MAX_IMAGES) return alert(`แนบรูปได้สูงสุด ${MAX_IMAGES} รูปครับ`);
 
+  // ต้องเปิดผ่านแอป LINE (ล็อกอิน LIFF แล้ว) ไม่เช่นนั้นระบบส่งร่างข่าวกลับไปที่ LINE ของผู้ส่งไม่ได้
+  let hasToken = false;
+  try { hasToken = !!liff.getAccessToken(); } catch (_) {}
+  if (userId === 'guest' || !hasToken) {
+    return alert('⚠️ ยังไม่ได้เข้าสู่ระบบ LINE จึงส่งร่างข่าวกลับไปที่แชทไม่ได้\n\nกรุณาเปิดฟอร์มนี้จากแอป LINE (ผ่านเมนู/ลิงก์ของบัญชี LINE OA) แล้วลองใหม่');
+  }
+
   btn.disabled = true;
   try {
     const urls = [];
